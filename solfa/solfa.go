@@ -14,20 +14,20 @@ const (
 	G Pitch = 'g'
 )
 
-type Accidental uint8
+type Halftone uint8
 
 const (
-	None  Accidental = 0
-	Sharp Accidental = '#' //increases pitch by one semitone
-	Flat  Accidental = 'b' // lowers pitch by one semitone
+	None  Halftone = 0
+	Sharp Halftone = '#' //increases pitch by one semitone
+	Flat  Halftone = 'b' // lowers pitch by one semitone
 	// Todo: consider others http://neilhawes.com/sstheory/theory17.htm
 )
 
 type Note struct {
-	Pitch      Pitch
-	Length     uint8  // as a divisor 1: whole note
-	Accidental Accidental
-	Octave     uint8
+	Pitch    Pitch
+	Length   uint8  // as a divisor 1: whole note
+	Halftone Halftone
+	Octave   uint8
 }
 
 type channel struct {
@@ -42,7 +42,7 @@ type parseState int
 const (
 	initial parseState = iota
 	setPitch
-	setAccident
+	setHalftone
 	setLength
 	globalOctave
 	setGlobalOctave
@@ -61,10 +61,10 @@ func ParseChannel(tab []byte) ([]Note, error) {
 
 	var addNote = func(p Pitch) {
 		n := Note{
-			Pitch:      p,
-			Length:     defaultLength,
-			Octave:     uint8(global.Octave),
-			Accidental: None,
+			Pitch:    p,
+			Length:   defaultLength,
+			Octave:   uint8(global.Octave),
+			Halftone: None,
 		}
 		notes = append(notes, n)
 		global.LastNote = &n
@@ -93,22 +93,37 @@ func ParseChannel(tab []byte) ([]Note, error) {
 			} else if inc, ok := isIncOctave(c); ok {
 				global.Octave += inc
 				status = initial
-			} else if acc, ok := isAccident(c); ok {
-				global.LastNote.Accidental = acc
-				status = setAccident
+			} else if acc, ok := isHalftone(c); ok {
+				global.LastNote.Halftone = acc
+				status = setHalftone
 			} else if d, ok := isDigit(c); ok {
 				global.LastNote.Length = uint8(d)
 				status = setLength
 			} else {
 				return notes, fmt.Errorf("unexpected character %c at position %d", c, i)
 			}
-		case setAccident:
+		case setHalftone:
 			if pitch, ok := isPitch(c); ok {
 				addNote(pitch)
 				status = setPitch
-			}else if isOctave(c) {
+			} else if isOctave(c) {
 				status = globalOctave
+			} else if inc, ok := isIncOctave(c); ok {
+				global.Octave += inc
+				status = initial
+			} else {
+				return notes, fmt.Errorf("unexpected character %c at position %d", c, i)
 			}
+		case setLength:
+			if pitch, ok := isPitch(c); ok {
+				addNote(pitch)
+				status = setPitch
+			} else if isOctave(c) {
+				status = globalOctave
+			} else if inc, ok := isIncOctave(c); ok {
+				global.Octave += inc
+				status = initial
+			} else
 		}
 	}
 }
@@ -125,7 +140,7 @@ func isPitch(c byte) (Pitch, bool) {
 	return 0, false
 }
 
-func isAccident(c byte) (Accidental, bool) {
+func isHalftone(c byte) (Halftone, bool) {
 	if c == '#' || c == '+' {
 		return Sharp, true
 	}
