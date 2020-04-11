@@ -1,6 +1,10 @@
 package solfa
 
-import "fmt"
+import (
+	"fmt"
+	"regexp"
+	"strconv"
+)
 
 type Pitch uint8
 
@@ -14,144 +18,138 @@ const (
 	G Pitch = 'g'
 )
 
-type Accidental uint8
+type Halftone uint8
 
 const (
-	None  Accidental = 0
-	Sharp Accidental = '#' //increases pitch by one semitone
-	Flat  Accidental = 'b' // lowers pitch by one semitone
+	None  Halftone = 0
+	Sharp Halftone = '+' //increases pitch by one semitone
+	Flat  Halftone = '-' // lowers pitch by one semitone
 	// Todo: consider others http://neilhawes.com/sstheory/theory17.htm
 )
 
 type Note struct {
-	Pitch      Pitch
-	Length     uint8  // as a divisor 1: whole note
-	Accidental Accidental
-	Octave     uint8
+	Pitch    Pitch
+	Length   uint // as a divisor 1: whole note
+	Halftone Halftone
+	Octave   uint
 }
 
 type channel struct {
-	LastNote *Note
-	Octave   int
-	Tempo    int
+	Octave uint
+	Tempo  uint
 }
 
-// states of a turing machine
-type parseState int
-
 const (
-	initial parseState = iota
-	setPitch
-	setAccident
-	setLength
-	globalOctave
-	setGlobalOctave
-)
-const (
+	minOctave     = 1
+	maxOctave     = 8
+	minLength     = 1
+	maxLength     = 64
 	defaultLength = 4
 )
 
+var tokenizer = regexp.MustCompile(`^((([a-zA-Z])(\d*)([+\-#]?))|([<>]))`)
+
 func ParseChannel(tab []byte) ([]Note, error) {
-	status := initial
 	global := channel{
 		Octave: 4,
 		Tempo:  120,
 	}
 	var notes []Note
 
-	var addNote = func(p Pitch) {
-		n := Note{
-			Pitch:      p,
-			Length:     defaultLength,
-			Octave:     uint8(global.Octave),
-			Accidental: None,
+	index := 0
+	for len(tab) > 0 {
+		token := tokenizer.Find(tab)
+		if token == nil {
+			return nil, fmt.Errorf("at position %d: unexpected charecter '%c'", index, tab[0])
 		}
-		notes = append(notes, n)
-		global.LastNote = &n
+		tab = tab[len(token):]
+		switch token[0] {
+		case 'o', 'O':
+			if err := parseOctave(token, &global); err != nil {
+				return nil, fmt.Errorf("at position %d: %w", index, err)
+			}
+		case 'a', 'b', 'c', 'd', 'e', 'f', 'g',
+			'A', 'B', 'C', 'D', 'E', 'F', 'G':
+			note, err := parseNote(token, &global)
+			if err != nil {
+				return nil, fmt.Errorf("at position %d: %w", index, err)
+			}
+			notes = append(notes, note)
+		case '<':
+			if global.Octave == minOctave {
+				return nil, fmt.Errorf("at position %d: can't set octave lower than %d", index, maxOctave)
+			}
+			global.Octave--
+		case '>':
+			if global.Octave == maxOctave {
+				return nil, fmt.Errorf("at position %d: can't set an octave greater than %d", index, maxOctave)
+			}
+			global.Octave++
+		}
+		index += len(token)
 	}
+	return notes, nil
+}
 
-	for i, c := range tab {
-		switch status {
-		case initial:
-			if pitch, ok := isPitch(c); ok {
-				addNote(pitch)
-				status = setPitch
-			} else if isOctave(c) {
-				status = globalOctave
-			} else if inc, ok := isIncOctave(c); ok {
-				global.Octave += inc
-				status = initial
-			} else {
-				return notes, fmt.Errorf("unexpected character %c at position %d", c, i)
-			}
-		case setPitch:
-			if pitch, ok := isPitch(c); ok {
-				addNote(pitch)
-				status = setPitch
-			} else if isOctave(c) {
-				status = globalOctave
-			} else if inc, ok := isIncOctave(c); ok {
-				global.Octave += inc
-				status = initial
-			} else if acc, ok := isAccident(c); ok {
-				global.LastNote.Accidental = acc
-				status = setAccident
-			} else if d, ok := isDigit(c); ok {
-				global.LastNote.Length = uint8(d)
-				status = setLength
-			} else {
-				return notes, fmt.Errorf("unexpected character %c at position %d", c, i)
-			}
-		case setAccident:
-			if pitch, ok := isPitch(c); ok {
-				addNote(pitch)
-				status = setPitch
-			}else if isOctave(c) {
-				status = globalOctave
-			}
+var note = regexp.MustCompile(`^(\d*)([+\-#]?)$`)
+
+func parseNote(token []byte, c *channel) (Note, error) {
+	sm := note.FindSubmatch(token[1:])
+	if sm == nil {
+		panic(fmt.Sprintf("wrong format for note: %q! this is a bug", string(token)))
+	}
+	n := Note{
+		Pitch:    getPitch(token[0]),
+		Length:   defaultLength,
+		Octave:   c.Octave,
+		Halftone: None,
+	}
+	// read Length
+	if len(sm[1]) > 0 {
+		l, err := strconv.Atoi(string(sm[1]))
+		if err != nil {
+			panic(fmt.Sprintf("wrong length for note: %q! this is a bug. Err: %s",
+				string(token), err.Error()))
+		}
+		if l < minLength || l > maxLength {
+			return Note{}, fmt.Errorf(
+				"wrong note length: %d. Must be in range %d to %d", l, minLength, maxLength)
 		}
 	}
+	// read halftone
+	if len(sm[2]) > 0 {
+		switch sm[2][0] {
+		case '+', '#':
+			n.Halftone = Sharp
+		case '-':
+			n.Halftone = Flat
+		default:
+			panic(fmt.Sprintf("wrong halftone '%c'! this is a bug", sm[2][0]))
+		}
+	}
+	return n, nil
+}
+
+func parseOctave(token []byte, c *channel) error {
+	i, err := strconv.Atoi(string(token[1:]))
+	if err != nil {
+		return err
+	}
+	if i < minOctave || i > maxOctave {
+		return fmt.Errorf("octave value must be 1 to 8")
+	}
+	c.Octave = uint(i)
+	return nil
 }
 
 var pitches = [8]Pitch{A, B, C, D, E, F, G}
 
-func isPitch(c byte) (Pitch, bool) {
+func getPitch(c byte) Pitch {
 	if c >= 'A' && c <= 'Z' {
-		return pitches[c-'A'], true
+		return pitches[c-'A']
 	}
 	if c >= 'a' && c <= 'z' {
-		return pitches[c-'a'], true
+		return pitches[c-'a']
 	}
-	return 0, false
-}
-
-func isAccident(c byte) (Accidental, bool) {
-	if c == '#' || c == '+' {
-		return Sharp, true
-	}
-	if c == '-' {
-		return Flat, true
-	}
-	return None, false
-}
-
-func isOctave(c byte) bool {
-	return c == 'o' || c == 'O'
-}
-
-func isDigit(c byte) (int, bool) {
-	if c >= '0' && c <= '9' {
-		return int(c - '0'), true
-	}
-	return -1, false
-}
-
-func isIncOctave(c byte) (int, bool) {
-	if c == '<' {
-		return -1, true
-	}
-	if c == '>' {
-		return 1, true
-	}
-	return 0, false
+	panic(fmt.Sprintf("pitch can't be '%c'! this is a bug", c))
 }
