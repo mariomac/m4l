@@ -1,17 +1,6 @@
 package solfa
 
-type Length float64
-
-// USA name for note duration
-const (
-	Whole        Length = 1
-	Half         Length = 2
-	Quarter      Length = 4
-	Eigth        Length = 8
-	Sixteenth    Length = 16
-	ThirtySecond Length = 32
-	SixtyFourth  Length = 64
-)
+import "fmt"
 
 type Pitch uint8
 
@@ -36,59 +25,133 @@ const (
 
 type Note struct {
 	Pitch      Pitch
-	Length     Length
+	Length     uint8  // as a divisor 1: whole note
 	Accidental Accidental
 	Octave     uint8
 }
 
 type channel struct {
-	LastNote Note
-	Octave uint8
-	Tempo int
+	LastNote *Note
+	Octave   int
+	Tempo    int
 }
 
 // states of a turing machine
 type parseState int
+
 const (
 	initial parseState = iota
 	setPitch
 	setAccident
-	setLocalOctave
+	setLength
 	globalOctave
 	setGlobalOctave
 )
 const (
-	defaultLength = Quarter
+	defaultLength = 4
 )
+
 func ParseChannel(tab []byte) ([]Note, error) {
 	status := initial
 	global := channel{
 		Octave: 4,
-		Tempo: 120,
+		Tempo:  120,
 	}
 	var notes []Note
-	for _, c := range tab {
+
+	var addNote = func(p Pitch) {
+		n := Note{
+			Pitch:      p,
+			Length:     defaultLength,
+			Octave:     uint8(global.Octave),
+			Accidental: None,
+		}
+		notes = append(notes, n)
+		global.LastNote = &n
+	}
+
+	for i, c := range tab {
 		switch status {
 		case initial:
-			if p, ok := isPitch(c) ; ok {
-				global.LastNote = Note{
-					Pitch: p,
-					Length: defaultLength,
-					Octave: global.Octave,
-					Accidental: None,
-				}
+			if pitch, ok := isPitch(c); ok {
+				addNote(pitch)
+				status = setPitch
+			} else if isOctave(c) {
+				status = globalOctave
+			} else if inc, ok := isIncOctave(c); ok {
+				global.Octave += inc
+				status = initial
+			} else {
+				return notes, fmt.Errorf("unexpected character %c at position %d", c, i)
+			}
+		case setPitch:
+			if pitch, ok := isPitch(c); ok {
+				addNote(pitch)
+				status = setPitch
+			} else if isOctave(c) {
+				status = globalOctave
+			} else if inc, ok := isIncOctave(c); ok {
+				global.Octave += inc
+				status = initial
+			} else if acc, ok := isAccident(c); ok {
+				global.LastNote.Accidental = acc
+				status = setAccident
+			} else if d, ok := isDigit(c); ok {
+				global.LastNote.Length = uint8(d)
+				status = setLength
+			} else {
+				return notes, fmt.Errorf("unexpected character %c at position %d", c, i)
+			}
+		case setAccident:
+			if pitch, ok := isPitch(c); ok {
+				addNote(pitch)
+				status = setPitch
+			}else if isOctave(c) {
+				status = globalOctave
 			}
 		}
 	}
 }
 
 var pitches = [8]Pitch{A, B, C, D, E, F, G}
+
 func isPitch(c byte) (Pitch, bool) {
 	if c >= 'A' && c <= 'Z' {
-		return pitches[c - 'A'], true
+		return pitches[c-'A'], true
 	}
 	if c >= 'a' && c <= 'z' {
-		return pitches[c - 'a'], true
+		return pitches[c-'a'], true
+	}
+	return 0, false
+}
+
+func isAccident(c byte) (Accidental, bool) {
+	if c == '#' || c == '+' {
+		return Sharp, true
+	}
+	if c == '-' {
+		return Flat, true
+	}
+	return None, false
+}
+
+func isOctave(c byte) bool {
+	return c == 'o' || c == 'O'
+}
+
+func isDigit(c byte) (int, bool) {
+	if c >= '0' && c <= '9' {
+		return int(c - '0'), true
+	}
+	return -1, false
+}
+
+func isIncOctave(c byte) (int, bool) {
+	if c == '<' {
+		return -1, true
+	}
+	if c == '>' {
+		return 1, true
 	}
 	return 0, false
 }
