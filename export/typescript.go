@@ -21,7 +21,7 @@ func (ts *TypeScript) Export(tab []byte, out io.Writer) error {
 	if _, err := fmt.Fprintln(out, "export var Song = ["); err != nil {
 		return err
 	}
-	sixteenths := uint(0) // todo: consider higher?
+	sixteenths := float64(0) // todo: consider higher?
 	for _, note := range notes {
 		if note.Pitch != solfa.Silence {
 			if _, err := fmt.Fprintf(out, `%c{"duration":"%dn","note":"%c`,
@@ -33,15 +33,17 @@ func (ts *TypeScript) Export(tab []byte, out io.Writer) error {
 					return err
 				}
 			}
-			if _, err := fmt.Fprintf(out, `%d","time":"%d:%d:%d","velocity":1},%c`,
+			if _, err := fmt.Fprintf(out, `%d","time":%f,"velocity":1},%c`,
 				note.Octave,
-				sixteenths/16,
-				(sixteenths/4)%4,
-				sixteenths%4, '\n'); err != nil {
+				sixteenths/8, '\n'); err != nil {
 				return err
 			}
 		}
-		sixteenths += 16 / note.Length
+		length := 16.0 / float64(note.Length)
+		if note.Tuplet >= 3 { // todo consider 5-tuples etc...
+			length *= float64(note.Tuplet-1) / float64(note.Tuplet)
+		}
+		sixteenths += length
 	}
 	_, err = fmt.Fprintln(out, "];")
 	return err

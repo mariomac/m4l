@@ -7,7 +7,7 @@ import (
 
 func main() {
 	// https://musescore.com/user/20360426/scores/4880846
-	str := "a2r2 a8a8a8a8|ag8ar2 a8a8a8a8|ag8ar2 a8a8a8a8" +
+	str := "a2 {r4a8}3{a8a8a8}3|{ag8}3 a {r4a8}3 {a8a8a8}3|{ag8}3 a {r4a8}3 {a8a8a8}3" +
 		"a8e16e16e8e16e16e8e16e16e8e8|aer8a8a16b16>c#16d16" +
 	    "e2"
 
