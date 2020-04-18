@@ -9,6 +9,7 @@ import (
 type Pitch uint8
 
 const (
+	Silence Pitch = 0
 	A Pitch = 'a'
 	B Pitch = 'b'
 	C Pitch = 'c'
@@ -21,9 +22,9 @@ const (
 type Halftone uint8
 
 const (
-	None  Halftone = 0
-	Sharp Halftone = '+' //increases pitch by one semitone
-	Flat  Halftone = '-' // lowers pitch by one semitone
+	NoHalftone Halftone = 0
+	Sharp      Halftone = '#' //increases pitch by one semitone
+	Flat       Halftone = '-' // lowers pitch by one semitone
 	// Todo: consider others http://neilhawes.com/sstheory/theory17.htm
 )
 
@@ -47,7 +48,7 @@ const (
 	defaultLength = 4
 )
 
-var tokenizer = regexp.MustCompile(`^((([a-zA-Z])(\d*)([+\-#]?))|([<>]))`)
+var tokenizer = regexp.MustCompile(`^((([a-zA-Z])([+\-#]?)(\d*))|([<>]))|\s+|\|`)
 
 func ParseChannel(tab []byte) ([]Note, error) {
 	global := channel{
@@ -68,6 +69,12 @@ func ParseChannel(tab []byte) ([]Note, error) {
 			if err := parseOctave(token, &global); err != nil {
 				return nil, fmt.Errorf("at position %d: %w", index, err)
 			}
+		case 'r', 'R':
+			note, err := parseSilence(token)
+			if err != nil {
+				return nil, fmt.Errorf("at position %d: %w", index, err)
+			}
+			notes = append(notes, note)
 		case 'a', 'b', 'c', 'd', 'e', 'f', 'g',
 			'A', 'B', 'C', 'D', 'E', 'F', 'G':
 			note, err := parseNote(token, &global)
@@ -91,7 +98,21 @@ func ParseChannel(tab []byte) ([]Note, error) {
 	return notes, nil
 }
 
-var note = regexp.MustCompile(`^(\d*)([+\-#]?)$`)
+func parseSilence(token []byte) (Note, error) {
+	n := Note{Pitch: Silence}
+	if len(token) == 1 {
+		n.Length = defaultLength
+		return n, nil
+	}
+	length, err := strconv.Atoi(string(token[1:]))
+	if err != nil {
+		return n, fmt.Errorf("wrong format for silence: %q. It must be an 'R' followed by a number", string(token))
+	}
+	n.Length = uint(length)
+	return n, nil
+}
+
+var note = regexp.MustCompile(`^([+\-#]?)(\d*)$`)
 
 func parseNote(token []byte, c *channel) (Note, error) {
 	sm := note.FindSubmatch(token[1:])
@@ -102,11 +123,11 @@ func parseNote(token []byte, c *channel) (Note, error) {
 		Pitch:    getPitch(token[0]),
 		Length:   defaultLength,
 		Octave:   c.Octave,
-		Halftone: None,
+		Halftone: NoHalftone,
 	}
 	// read Length
-	if len(sm[1]) > 0 {
-		l, err := strconv.Atoi(string(sm[1]))
+	if len(sm[2]) > 0 {
+		l, err := strconv.Atoi(string(sm[2]))
 		if err != nil {
 			panic(fmt.Sprintf("wrong length for note: %q! this is a bug. Err: %s",
 				string(token), err.Error()))
@@ -115,16 +136,17 @@ func parseNote(token []byte, c *channel) (Note, error) {
 			return Note{}, fmt.Errorf(
 				"wrong note length: %d. Must be in range %d to %d", l, minLength, maxLength)
 		}
+		n.Length = uint(l)
 	}
 	// read halftone
-	if len(sm[2]) > 0 {
-		switch sm[2][0] {
+	if len(sm[1]) > 0 {
+		switch sm[1][0] {
 		case '+', '#':
 			n.Halftone = Sharp
 		case '-':
 			n.Halftone = Flat
 		default:
-			panic(fmt.Sprintf("wrong halftone '%c'! this is a bug", sm[2][0]))
+			panic(fmt.Sprintf("wrong halftone '%c'! this is a bug", sm[1][0]))
 		}
 	}
 	return n, nil

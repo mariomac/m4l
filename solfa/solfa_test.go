@@ -27,7 +27,7 @@ func TestParseChannel_WrongStrings(t *testing.T) {
 		{ "two halftones", "A<<b--", "at position 5"},
 		{ "wrong note length 0", "o5a0", "at position 2"},
 		{ "wrong note length 1000", "O5a1000", "at position 2"},
-
+		{ "invalid characters at the end", "abcde!!!", "at position 5"},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
