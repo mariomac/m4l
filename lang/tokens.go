@@ -15,14 +15,13 @@ const (
 )
 
 type Tokenizer struct {
-	rest []byte // subslice to non-read input
+	rest      []byte // subslice to non-read input
 	lastMatch []byte
 }
 
-func NewTokenizer(input []byte) Tokenizer {
-	return Tokenizer{
+func NewTokenizer(input []byte) *Tokenizer {
+	return &Tokenizer{
 		rest: input,
-
 	}
 }
 
@@ -48,32 +47,30 @@ func (t *Tokenizer) Get() Token {
 }
 
 type Token struct {
-	Type TokenType
+	Type    TokenType
+	Content []byte
 	Channel ChannelToken // if Type == Channel, this has metadata about the channel
-	String StringToken
 }
 
 type ChannelToken struct {
 	Number int
 }
 
-type StringToken struct {
-	Content []byte
-}
-
 var channel = regexp.MustCompile(`^@(\d+)$`)
+
 const arrow = "<-"
+
 func parseToken(token []byte) Token {
-	if ch := channel.FindSubmatch(token) ; ch != nil {
+	if ch := channel.FindSubmatch(token); ch != nil {
 		num, err := strconv.Atoi(string(ch[1]))
 		if err != nil {
 			panic(fmt.Errorf("THIS IS BUG!!! expecting a channel number: %w", err))
 		}
-		return Token{Type: Channel, Channel: ChannelToken{Number:num}}
+		return Token{Type: Channel, Content: token, Channel: ChannelToken{Number: num}}
 	}
 	if string(token) == arrow {
-		return Token{Type: ChannelSendArrow}
+		return Token{Type: ChannelSendArrow, Content: token}
 	}
 	// todo: verify the correct format of the string
-	return Token{Type: String, String: StringToken{Content: token}}
+	return Token{Type: String, Content: token}
 }

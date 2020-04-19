@@ -98,7 +98,7 @@ func parseSubstring(tab []byte, pOff int, global *channel) ([]Note, error) {
 			notes = append(notes, note)
 		case '<':
 			if global.Octave == minOctave {
-				return nil, fmt.Errorf("at position %d: can't set octave lower than %d", pOff+index, maxOctave)
+				return nil, fmt.Errorf("at position %d: can't set octave lower than %d", pOff+index, minOctave)
 			}
 			global.Octave--
 		case '>':
