@@ -8,7 +8,7 @@ import (
 )
 
 func TestParseChannel(t *testing.T) {
-	_, err := ParseChannel([]byte("a16b32co3a<b3#c-"))
+	_, err := Parse([]byte("a16b32co3a<b3#c-"))
 	require.NoError(t, err)
 }
 
@@ -31,7 +31,7 @@ func TestParseChannel_WrongStrings(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			_, err := ParseChannel([]byte(tc.input))
+			_, err := Parse([]byte(tc.input))
 			require.Error(t, err)
 			require.Truef(t, strings.HasPrefix(err.Error(), tc.errPrefix),
 				"expected prefix %q in error message %q", tc.errPrefix, err.Error())

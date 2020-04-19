@@ -58,7 +58,7 @@ var tokenizer = regexp.MustCompile(`^(` +
 	`|(\{[^\{}]*}\d+)` + // anything into brackets followed by a number: tuplet
 	`)`)
 
-func ParseChannel(tab []byte) ([]Note, error) {
+func Parse(tab []byte) ([]Note, error) {
 	global := channel{
 		Octave: 4,
 		Tempo:  120,

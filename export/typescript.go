@@ -14,7 +14,7 @@ type Exporter interface {
 type TypeScript struct{}
 
 func (ts *TypeScript) Export(tab []byte, out io.Writer) error {
-	notes, err := solfa.ParseChannel(tab)
+	notes, err := solfa.Parse(tab)
 	if err != nil {
 		return err
 	}

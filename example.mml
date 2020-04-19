@@ -1,16 +1,6 @@
-si piano {
-    wave: sine
-    blah bla
-}
+@0 <- abcdefgo1<ab4#
+      abcdeefghwa3322
 
-si battery {
-    noise
-}
+@1 <- abcdefgo1<ab4#
+      abcdeefghwa3322
 
-$p = abcdefgo1<ab4#
-     abcdeefghwa3322
-     ;
-$p2 = abcdefg4<ab#;
-
-i(piano, battery)
-p($p, $p2)
