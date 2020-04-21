@@ -13,8 +13,8 @@ import (
 
 func Root(t *Tokenizer) (*song.Song, error) {
 	s := &song.Song{Channels: map[int]song.Channel{}}
-
-	for t.Next() {
+	t.Next()
+	for !t.EOF() {
 		token := t.Get()
 		switch token.Type {
 		case Channel:

@@ -63,11 +63,10 @@ func Parse(tab []byte) ([]Note, error) {
 		Octave: 4,
 		Tempo:  120,
 	}
-	return parseSubstring(tab, 0, &global)
+	return parseSubstring(tab, &global)
 }
 
-// pOff: offset tab slice start with respect to the containing slice. Used only for enumerating position
-func parseSubstring(tab []byte, pOff int, global *channel) ([]Note, error) {
+func parseSubstring(tab []byte, global *channel) ([]Note, error) {
 
 	var notes []Note
 
@@ -75,43 +74,45 @@ func parseSubstring(tab []byte, pOff int, global *channel) ([]Note, error) {
 	for len(tab) > 0 {
 		token := tokenizer.Find(tab)
 		if token == nil {
-			return nil, fmt.Errorf("at position %d: unexpected charecter '%c'", pOff+index, tab[0])
+			return nil, fmt.Errorf("at position %d: unexpected charecter '%c'", index, tab[0])
 		}
 		tab = tab[len(token):]
 		switch token[0] {
 		case 'o', 'O':
 			if err := parseOctave(token, global); err != nil {
-				return nil, fmt.Errorf("at position %d: %w", pOff+index, err)
+				return nil, fmt.Errorf("at position %d: %w", index, err)
 			}
 		case 'r', 'R':
 			note, err := parseSilence(token)
 			if err != nil {
-				return nil, fmt.Errorf("at position %d: %w", pOff+index, err)
+				return nil, fmt.Errorf("at position %d: %w", index, err)
 			}
 			notes = append(notes, note)
 		case 'a', 'b', 'c', 'd', 'e', 'f', 'g',
 			'A', 'B', 'C', 'D', 'E', 'F', 'G':
 			note, err := parseNote(token, global)
 			if err != nil {
-				return nil, fmt.Errorf("at position %d: %w", pOff+index, err)
+				return nil, fmt.Errorf("at position %d: %w", index, err)
 			}
 			notes = append(notes, note)
 		case '<':
 			if global.Octave == minOctave {
-				return nil, fmt.Errorf("at position %d: can't set octave lower than %d", pOff+index, minOctave)
+				return nil, fmt.Errorf("at position %d: can't set octave lower than %d", index, minOctave)
 			}
 			global.Octave--
 		case '>':
 			if global.Octave == maxOctave {
-				return nil, fmt.Errorf("at position %d: can't set an octave greater than %d", pOff+index, maxOctave)
+				return nil, fmt.Errorf("at position %d: can't set an octave greater than %d", index, maxOctave)
 			}
 			global.Octave++
 		case '{':
-			tNotes, err := parseTuplet(token, pOff, global)
+			tNotes, err := parseTuplet(token, global)
 			if err != nil {
-				return nil, fmt.Errorf("tuplet starting at %d: %w", pOff+index, err)
+				return nil, fmt.Errorf("tuplet starting at %d: %w", index, err)
 			}
 			notes = append(notes, tNotes...)
+		default:
+			return nil, fmt.Errorf("unknown char at position %d: %c", index, token)
 		}
 		index += len(token)
 	}
@@ -120,16 +121,17 @@ func parseSubstring(tab []byte, pOff int, global *channel) ([]Note, error) {
 
 var tuplet = regexp.MustCompile(`^\{(.*)}(\d+)$`)
 
-func parseTuplet(token []byte, pOff int, c *channel) ([]Note, error) {
+func parseTuplet(token []byte, c *channel) ([]Note, error) {
 	sm := tuplet.FindSubmatch(token)
 	if sm == nil {
 		panic(fmt.Sprintf("wrong format for tuplet: %q! this is a bug", string(token)))
 	}
 
-	tNotes, err := parseSubstring(sm[1], pOff, c)
+	tNotes, err := parseSubstring(sm[1], c)
 	if err != nil {
 		return nil, err
 	}
+
 	nTuple, err := strconv.Atoi(string(sm[2]))
 	if err != nil {
 		return nil, fmt.Errorf("tuple needs a proper number suffix: %w", err)
@@ -138,6 +140,7 @@ func parseTuplet(token []byte, pOff int, c *channel) ([]Note, error) {
 	for i := range tNotes {
 		tNotes[i].Tuplet = uint(nTuple)
 	}
+
 	return tNotes, nil
 }
 

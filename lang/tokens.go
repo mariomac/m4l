@@ -25,7 +25,7 @@ func NewTokenizer(input []byte) *Tokenizer {
 	}
 }
 
-var tokens = regexp.MustCompile(`\S+`)
+var tokens = regexp.MustCompile(`(@\d+)|(<-)|\S+`)
 
 func (t *Tokenizer) Next() bool {
 	if len(t.rest) == 0 {
@@ -40,6 +40,10 @@ func (t *Tokenizer) Next() bool {
 	t.lastMatch = t.rest[idx[0]:idx[1]]
 	t.rest = t.rest[idx[1]:]
 	return true
+}
+
+func (t *Tokenizer) EOF() bool {
+	return len(t.rest) == 0
 }
 
 func (t *Tokenizer) Get() Token {
