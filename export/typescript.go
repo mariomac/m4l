@@ -41,10 +41,18 @@ func exportChannel(c song.Channel, out io.Writer) error {
 				'\t', note.Length, note.Pitch); err != nil {
 				return err
 			}
-			if note.Halftone != solfa.NoHalftone {
-				if _, err := fmt.Fprintf(out, `%c`, note.Halftone); err != nil {
+			switch note.Halftone {
+			case solfa.Sharp:
+				if _, err := fmt.Fprintf(out, `%c`, '#'); err != nil {
 					return err
 				}
+			case solfa.Flat:
+				if _, err := fmt.Fprintf(out, `%c`, 'b'); err != nil {
+					return err
+				}
+			}
+			if note.Halftone != solfa.NoHalftone {
+
 			}
 			if _, err := fmt.Fprintf(out, `%d","time":%f,"velocity":1},%c`,
 				note.Octave,
