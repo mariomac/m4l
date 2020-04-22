@@ -3,10 +3,10 @@ package song
 import "github.com/mariomac/msxmml/solfa"
 
 type Song struct {
-	Channels map[int]Channel
+	Channels map[string]Channel
 }
 
 type Channel struct {
-	Number int
+	Name string
 	Notes []solfa.Note
 }

@@ -12,7 +12,7 @@ import (
 // Convention: tokenizer always receives a tokenizer with a token available, excepting the Root
 
 func Root(t *Tokenizer) (*song.Song, error) {
-	s := &song.Song{Channels: map[int]song.Channel{}}
+	s := &song.Song{Channels: map[string]song.Channel{}}
 	t.Next()
 	for !t.EOF() {
 		token := t.Get()
@@ -22,7 +22,7 @@ func Root(t *Tokenizer) (*song.Song, error) {
 			if err != nil {
 				return nil, err
 			}
-			s.Channels[ch.Number] = ch
+			s.Channels[ch.Name] = ch
 		default:
 			return nil, fmt.Errorf("unexpected input: %q. I was expecting a channel ID", string(token.Content))
 		}
@@ -33,7 +33,7 @@ func Root(t *Tokenizer) (*song.Song, error) {
 
 func ChannelNode(t *Tokenizer) (song.Channel, error) {
 	last := t.Get()
-	c := song.Channel{Number: last.Channel.Number}
+	c := song.Channel{Name: string(last.Content[1:])}
 
 	if !t.Next() {
 		return c, unexpectedError("channel information", []byte("end of input"))

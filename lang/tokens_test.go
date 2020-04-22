@@ -12,7 +12,7 @@ func TestTokenizer_TwoChannels(t *testing.T) {
 @0 <- abcdefgo1<ab4#
       abcdeefghwa3322
 
-@1<-abcdedgo1<ab4#
+@troloro<-abcdedgo1<ab4#
 	abcdeebbfghwa3322
 `
 	tok := NewTokenizer([]byte(mml))
@@ -21,11 +21,11 @@ func TestTokenizer_TwoChannels(t *testing.T) {
 		tokens = append(tokens, tok.Get())
 	}
 	assert.Equal(t, []Token{
-		{Type: Channel, Content: []byte("@0"), Channel: ChannelToken{Number: 0}},
+		{Type: Channel, Content: []byte("@0")},
 		{Type: ChannelSendArrow, Content: []byte("<-")},
 		{Type: String, Content: []byte("abcdefgo1<ab4#")},
 		{Type: String, Content: []byte("abcdeefghwa3322")},
-		{Type: Channel, Content: []byte("@1"),Channel: ChannelToken{Number: 1}},
+		{Type: Channel, Content: []byte("@troloro")},
 		{Type: ChannelSendArrow, Content: []byte("<-")},
 		{Type: String, Content: []byte("abcdedgo1<ab4#")},
 		{Type: String, Content: []byte("abcdeebbfghwa3322")}},

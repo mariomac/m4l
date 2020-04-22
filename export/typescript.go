@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/mariomac/msxmml/song"
+
 	"github.com/mariomac/msxmml/solfa"
 )
 
@@ -13,17 +15,28 @@ type Exporter interface {
 
 type TypeScript struct{}
 
-func (ts *TypeScript) Export(tab []byte, out io.Writer) error {
-	notes, err := solfa.Parse(tab)
-	if err != nil {
+// TODO: use a go template
+func (ts *TypeScript) Export(s *song.Song, out io.Writer) error {
+	if _, err := fmt.Fprintln(out, "export var Song = {"); err != nil {
 		return err
 	}
-	if _, err := fmt.Fprintln(out, "export var Song = ["); err != nil {
-		return err
+	for _, c := range s.Channels {
+		if err := exportChannel(c, out); err != nil {
+			return err
+		}
 	}
+	_, err := fmt.Fprintln(out, "};")
+	return err
+}
+
+func exportChannel(c song.Channel, out io.Writer) error {
 	sixteenths := float64(0) // todo: consider higher?
-	for _, note := range notes {
+	if _, err := fmt.Fprintf(out, "\t\"%s\":[\n", c.Name); err != nil {
+		return err
+	}
+	for _, note := range c.Notes {
 		if note.Pitch != solfa.Silence {
+			fmt.Fprint(out, "\t\t")
 			if _, err := fmt.Fprintf(out, `%c{"duration":"%dn","note":"%c`,
 				'\t', note.Length, note.Pitch); err != nil {
 				return err
@@ -45,6 +58,6 @@ func (ts *TypeScript) Export(tab []byte, out io.Writer) error {
 		}
 		sixteenths += length
 	}
-	_, err = fmt.Fprintln(out, "];")
+	_, err := fmt.Fprintf(out, "\t],\n")
 	return err
 }

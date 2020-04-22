@@ -1,9 +1,7 @@
 package lang
 
 import (
-	"fmt"
 	"regexp"
-	"strconv"
 )
 
 type TokenType int
@@ -25,7 +23,7 @@ func NewTokenizer(input []byte) *Tokenizer {
 	}
 }
 
-var tokens = regexp.MustCompile(`(@\d+)|(<-)|\S+`)
+var tokens = regexp.MustCompile(`(@\w+)|(<-)|\S+|\|+`)
 
 func (t *Tokenizer) Next() bool {
 	if len(t.rest) == 0 {
@@ -53,24 +51,15 @@ func (t *Tokenizer) Get() Token {
 type Token struct {
 	Type    TokenType
 	Content []byte
-	Channel ChannelToken // if Type == Channel, this has metadata about the channel
 }
 
-type ChannelToken struct {
-	Number int
-}
-
-var channel = regexp.MustCompile(`^@(\d+)$`)
+var channel = regexp.MustCompile(`^@(\w+)$`)
 
 const arrow = "<-"
 
 func parseToken(token []byte) Token {
 	if ch := channel.FindSubmatch(token); ch != nil {
-		num, err := strconv.Atoi(string(ch[1]))
-		if err != nil {
-			panic(fmt.Errorf("THIS IS BUG!!! expecting a channel number: %w", err))
-		}
-		return Token{Type: Channel, Content: token, Channel: ChannelToken{Number: num}}
+		return Token{Type: Channel, Content: token}
 	}
 	if string(token) == arrow {
 		return Token{Type: ChannelSendArrow, Content: token}

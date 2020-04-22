@@ -111,6 +111,8 @@ func parseSubstring(tab []byte, global *channel) ([]Note, error) {
 				return nil, fmt.Errorf("tuplet starting at %d: %w", index, err)
 			}
 			notes = append(notes, tNotes...)
+		case '|':
+			// just ignore
 		default:
 			return nil, fmt.Errorf("unknown char at position %d: %c", index, token)
 		}
