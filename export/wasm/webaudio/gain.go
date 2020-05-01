@@ -1,7 +1,8 @@
-package wasm
+// +build wasm
+
+package webaudio
 
 import (
-	"log"
 	"syscall/js"
 	"time"
 )
@@ -15,6 +16,5 @@ func (on *Gain) SetValueAtTime(v float64, t time.Duration) {
 }
 
 func (on *Gain) LinearRampToValueAtTime(v float64, t time.Duration) {
-	log.Printf("rampValue %f at %v", v, t)
 	on.val.Get("gain").Call("linearRampToValueAtTime", v, t.Seconds())
 }

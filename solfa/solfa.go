@@ -162,6 +162,7 @@ func parseSilence(token []byte) (Note, error) {
 
 var note = regexp.MustCompile(`^([+\-#]?)(\d*)$`)
 
+// todo: return error if a given note can't be sharp or flat
 func parseNote(token []byte, c *channel) (Note, error) {
 	sm := note.FindSubmatch(token[1:])
 	if sm == nil {

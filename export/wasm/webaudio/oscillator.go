@@ -1,6 +1,6 @@
 // +build wasm
 
-package wasm
+package webaudio
 
 import (
 	"syscall/js"

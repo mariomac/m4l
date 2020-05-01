@@ -1,29 +1,42 @@
 package main
 
 import (
-	"syscall/js"
-	"time"
-
+	"bytes"
 	"github.com/mariomac/msxmml/export/wasm"
+	"github.com/mariomac/msxmml/lang"
+	"syscall/js"
 )
 
 func main() {
 	js.Global().Get("document").
 		Call("getElementById", "play").
 		Set("onclick", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-			ctx := wasm.WindowAudioContext()
-			node := ctx.NoteNodes(440, wasm.ADSR{
-				{1, 50 * time.Millisecond},
-				{0.7, 100 * time.Millisecond},
-				{0.7, 200 * time.Millisecond},
-				{0, 250 * time.Millisecond},
-			})
-			node.TriggerEnvelope(1 * time.Second)
-			node.TriggerEnvelope(2 * time.Second)
-			node.TriggerEnvelope(3 * time.Second)
-			node.TriggerEnvelope(5 * time.Second)
+			tocalaSam()
 			return nil
 		}))
 
 	<-make(chan struct{})
+}
+
+func tocalaSam() {
+	// https://musescore.com/user/20360426/scores/4880846
+	str := `
+@1 <- o4 e8e8 r8 e8 r8 c8 e | g r < g r
+      >c r8 <g r8 e | r8 a b b-8 a
+      {g>eg}3 a f8 g8 | r8 e c8d8 <b
+
+@2 <- o3 b8b8 r8 b8 r8 b8 b | >e r <e r
+      e r8 c r8 < a | r8 >c d d-8 c
+      {ca>c}3 d <b8>c8 | r8 <a f8g8 e
+`
+
+	s, err := lang.Root(lang.NewTokenizer(bytes.NewReader([]byte(str))))
+	panicIfErr(err)
+	wasm.ExportWasm(s)
+}
+
+func panicIfErr(err error) {
+	if err != nil {
+		panic(err)
+	}
 }

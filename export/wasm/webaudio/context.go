@@ -1,4 +1,6 @@
-package wasm
+// +build wasm
+
+package webaudio
 
 import (
 	"syscall/js"
@@ -26,6 +28,7 @@ func (ac *AudioContext) NoteNodes(freq float64, adsr ADSR) *OscillatorNode {
 	gainObj := &Gain{val: gain}
 	gainObj.SetValueAtTime(0, ac.Time())
 	osc := ac.val.Call("createOscillator")
+	osc.Set("type", "square")
 	osc.Call("connect", gain)
 	osc.Get("frequency").Set("value", freq)
 	osc.Call("start", ac.Time().Seconds())
