@@ -1,6 +1,9 @@
 package lang
 
 import (
+	"bufio"
+	"fmt"
+	"io"
 	"regexp"
 )
 
@@ -13,35 +16,53 @@ const (
 )
 
 type Tokenizer struct {
-	rest      []byte // subslice to non-read input
+	Row       int
+	Col       int
+	input     *bufio.Reader
+	lineRest  []byte //line that is being currently parsed
 	lastMatch []byte
 }
 
-func NewTokenizer(input []byte) *Tokenizer {
+func NewTokenizer(input io.Reader) *Tokenizer {
 	return &Tokenizer{
-		rest: input,
+		input: bufio.NewReader(input),
 	}
 }
 
 var tokens = regexp.MustCompile(`(@\w+)|(<-)|\S+|\|+`)
 
 func (t *Tokenizer) Next() bool {
-	if len(t.rest) == 0 {
-		return false
+	for !t.EOF() {
+		idx := tokens.FindIndex(t.lineRest)
+		if idx != nil {
+			t.lastMatch = t.lineRest[idx[0]:idx[1]]
+			t.lineRest = t.lineRest[idx[1]:]
+			t.Col += idx[0]
+			return true
+		}
+		t.readMoreLines()
 	}
-	idx := tokens.FindIndex(t.rest)
-	if idx == nil {
-		t.lastMatch = nil
-		t.rest = nil // EOF
-		return false
+	return false
+}
+
+func (t *Tokenizer) readMoreLines()  {
+	var err error
+	t.lastMatch = nil
+	t.lineRest, err = t.input.ReadBytes('\n')
+	if err != nil {
+		if err == io.EOF {
+			t.input = nil
+			t.lineRest = nil
+			return
+		}
+		panic(fmt.Errorf("can't read next line: %w", err))
 	}
-	t.lastMatch = t.rest[idx[0]:idx[1]]
-	t.rest = t.rest[idx[1]:]
-	return true
+	t.Col = 1
+	t.Row++
 }
 
 func (t *Tokenizer) EOF() bool {
-	return len(t.rest) == 0
+	return len(t.lineRest) == 0 && t.input == nil
 }
 
 func (t *Tokenizer) Get() Token {

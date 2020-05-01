@@ -1,6 +1,7 @@
 package lang
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -15,7 +16,7 @@ func TestTokenizer_TwoChannels(t *testing.T) {
 @troloro<-abcdedgo1<ab4#
 	abcdeebbfghwa3322
 `
-	tok := NewTokenizer([]byte(mml))
+	tok := NewTokenizer(bytes.NewReader([]byte(mml)))
 	var tokens []Token
 	for tok.Next() {
 		tokens = append(tokens, tok.Get())

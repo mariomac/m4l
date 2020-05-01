@@ -24,7 +24,7 @@ func Root(t *Tokenizer) (*song.Song, error) {
 			}
 			s.Channels[ch.Name] = ch
 		default:
-			return nil, fmt.Errorf("unexpected input: %q. I was expecting a channel ID", string(token.Content))
+			return nil, &ParserError{t, fmt.Errorf("unexpected input: %q. I was expecting a channel ID", string(token.Content))}
 		}
 	}
 
@@ -36,14 +36,14 @@ func ChannelNode(t *Tokenizer) (song.Channel, error) {
 	c := song.Channel{Name: string(last.Content[1:])}
 
 	if !t.Next() {
-		return c, unexpectedError("channel information", []byte("end of input"))
+		return c, unexpectedError(t, "channel information", []byte("end of input"))
 	}
 	last = t.Get()
 	if last.Type != ChannelSendArrow {
-		return c, unexpectedError("an arrow '<-'", last.Content)
+		return c, unexpectedError(t, "an arrow '<-'", last.Content)
 	}
 	if !t.Next() {
-		return c, unexpectedError("channel information", []byte("end of input"))
+		return c, unexpectedError(t, "channel information", []byte("end of input"))
 	}
 	tabs, err := TablatureNode(t)
 	if err != nil {
@@ -53,7 +53,7 @@ func ChannelNode(t *Tokenizer) (song.Channel, error) {
 	// so octave and other data stays between successive commands
 	c.Notes, err = solfa.Parse(tabs)
 	if err != nil {
-		return c, fmt.Errorf("problem with channel tablature: %w", err)
+		return c, &ParserError{t: t, cause: fmt.Errorf("problem with channel tablature: %w", err)}
 	}
 	return c, nil
 }
@@ -64,7 +64,7 @@ func TablatureNode(t *Tokenizer) ([]byte, error) {
 	var tablature []byte
 	tok := t.Get()
 	if tok.Type != String && !tabRegex.Match(tok.Content) {
-		return nil, unexpectedError("a music tablature", tok.Content)
+		return nil, unexpectedError(t, "a music tablature", tok.Content)
 	}
 	tablature = append(tablature, tok.Content...)
 	for t.Next() {
@@ -78,6 +78,18 @@ func TablatureNode(t *Tokenizer) ([]byte, error) {
 	return tablature, nil
 }
 
-func unexpectedError(expected string, actual []byte) error {
-	return fmt.Errorf("unexpected %q. I expected %s", string(actual), expected)
+type ParserError struct {
+	t     *Tokenizer
+	cause error
+}
+
+func (p *ParserError) Error() string {
+	return fmt.Sprintf("%d:%d - %s", p.t.Row, p.t.Col, p.cause.Error())
+}
+
+func unexpectedError(t *Tokenizer, expected string, actual []byte) *ParserError {
+	return &ParserError{
+		t:     t,
+		cause: fmt.Errorf("unexpected %q. I expected %s", string(actual), expected),
+	}
 }

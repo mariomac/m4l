@@ -1,6 +1,7 @@
 package lang
 
 import (
+	"bytes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -14,7 +15,7 @@ func TestTwoChannelParse(t *testing.T) {
 @1<-acbcdedgo2>ab#4
       abcdeebbfga38
 `
-	s, err := Root(NewTokenizer([]byte(mml)))
+	s, err := Root(NewTokenizer(bytes.NewReader([]byte(mml))))
 	require.NoError(t, err)
 	assert.Len(t, s.Channels, 2)
 	assert.Contains(t, s.Channels, "foo")
