@@ -46,7 +46,7 @@ func exportChannel(ctx *webaudio.AudioContext, c song.Channel) {
 			default:
 				pitch = fmt.Sprintf("%c%d", note.Pitch, note.Octave)
 			}
-			ch.Play(Note{Pitch: pitch, Time: time.Duration(sixteenths/8.0 * float64(time.Second))})
+			ch.Play(Note{Pitch: pitch, Time: time.Duration(sixteenths/8.0 * float64(time.Second) * 120/bpm)})
 		}
 		length := 16.0 / float64(note.Length)
 		if note.Tuplet >= 3 { // todo consider 5-tuples etc...

@@ -1,7 +1,6 @@
 package wasm
 
 import (
-	"log"
 	"time"
 
 	"github.com/mariomac/msxmml/export/wasm/webaudio"
@@ -11,21 +10,20 @@ import (
 const bpm = 180
 
 type Instrument struct {
-	adsr  webaudio.ADSR
+	adsr webaudio.ADSR
 }
 
 type ChannelNodes struct {
 	ctx   *webaudio.AudioContext
 	inst  Instrument
-	notes map[string]*webaudio.OscillatorNode
+	notes *webaudio.OscillatorNode
 }
 
-mirar si zurula con un solo oscilador y usando "frequency.setValueAtTime"
+//mirar si zurula con un solo oscilador y usando "frequency.setValueAtTime"
 func NewChannel(ctx *webaudio.AudioContext, i Instrument) *ChannelNodes {
 	return &ChannelNodes{
-		ctx:   ctx,
+		ctx:  ctx,
 		inst: i,
-		notes: map[string]*webaudio.OscillatorNode{},
 	}
 }
 
@@ -35,11 +33,8 @@ type Note struct {
 }
 
 func (cn *ChannelNodes) Play(n Note) {
-	log.Printf("pitch: %s (freq: %f)", n.Pitch, freqs[n.Pitch])
-	node, ok := cn.notes[n.Pitch]
-	if !ok {
-		node = cn.ctx.NoteNodes(freqs[n.Pitch], cn.inst.adsr)
-		cn.notes[n.Pitch] = node
+	if cn.notes == nil {
+		cn.notes = cn.ctx.NoteNodes(freqs[n.Pitch], cn.inst.adsr)
 	}
-	node.TriggerEnvelope(n.Time)
+	cn.notes.TriggerEnvelope(freqs[n.Pitch], n.Time)
 }

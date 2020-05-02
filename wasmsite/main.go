@@ -26,8 +26,8 @@ func tocalaSam() {
       {g>eg}3 a f8 g8 | r8 e c8d8 <b
 
 @2 <- o3 b8b8 r8 b8 r8 b8 b | >e r <e r
-      e r8 c r8 < a | r8 >c d d-8 c
-      {ca>c}3 d <b8>c8 | r8 <a f8g8 e
+     e r8 c r8 < a | r8 >c d d-8 c
+     {ca>c}3 d <b8>c8 | r8 <a f8g8 e
 `
 
 	s, err := lang.Root(lang.NewTokenizer(bytes.NewReader([]byte(str))))

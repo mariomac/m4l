@@ -23,12 +23,15 @@ func (on *OscillatorNode) Envelope(adsr ADSR) {
 	on.adsr = adsr
 }
 
-func (on *OscillatorNode) Frequency(f float64) {
-	on.val.Get("frequency").Set("value", f)
+func (on *OscillatorNode) FrequencyAtTime(f float64, t time.Duration) {
+	on.val.Get("frequency").Call("setValueAtTime", f, t.Seconds())
 }
 
-func (on *OscillatorNode) TriggerEnvelope(t time.Duration) {
+// todo: cancelScheduledValues para evitar que se solapen sonidos
+func (on *OscillatorNode) TriggerEnvelope(frequency float64, t time.Duration) {
 	ct := on.ctx.Time()
+	on.gain.val.Get("gain").Call("cancelScheduledValues", t.Seconds())
+	on.FrequencyAtTime(frequency, t)
 	on.gain.SetValueAtTime(0, ct+t)
 	for _, a := range on.adsr {
 		on.gain.LinearRampToValueAtTime(a.Val, ct+t+a.Time)
