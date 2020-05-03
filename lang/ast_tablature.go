@@ -11,26 +11,27 @@ import (
 // tablature: (octave|note|pause|....)+
 func (p *Parser) tablatureNode(c *song.Channel) error {
 	startTupletIndex := -1
-	for tok := p.t.Get(); !p.t.EOF(); p.t.Next() {
+	for !p.t.EOF() {
+		tok := p.t.Get()
 		switch tok.Type {
 		case Note:
-			if n, err := parseNote(tok, c); err == nil {
+			if n, err := parseNote(tok, c); err != nil {
 				return err
 			} else {
 				c.Notes = append(c.Notes, n)
 			}
 		case Silence:
-			if n, err := parseSilence(tok); err == nil {
+			if n, err := parseSilence(tok); err != nil {
 				return err
 			} else {
 				c.Notes = append(c.Notes, n)
 			}
 		case Octave:
-			if err := parseOctave(tok, c); err == nil {
+			if err := parseOctave(tok, c); err != nil {
 				return err
 			}
 		case IncOctave, DecOctave:
-			if err := parseOctaveStep(tok, c); err == nil {
+			if err := parseOctaveStep(tok, c); err != nil {
 				return err
 			}
 		case OpenSection:
@@ -49,6 +50,7 @@ func (p *Parser) tablatureNode(c *song.Channel) error {
 			// end of tablature, return
 			return nil
 		}
+		p.t.Next()
 	}
 	return nil
 }
@@ -177,5 +179,5 @@ type TablatureError struct {
 }
 
 func (t TablatureError) Error() string {
-	return fmt.Sprintf("At %d,%d: %s", t.t.Row, t.t.Content, t.msg)
+	return fmt.Sprintf("At %d,%d: %s", t.t.Row, t.t.Col, t.msg)
 }
