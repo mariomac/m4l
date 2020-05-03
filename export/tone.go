@@ -2,11 +2,10 @@ package export
 
 import (
 	"fmt"
+	"github.com/mariomac/msxmml/song/note"
 	"io"
 
 	"github.com/mariomac/msxmml/song"
-
-	"github.com/mariomac/msxmml/note"
 )
 
 type Exporter interface {
@@ -29,19 +28,19 @@ func (ts *TypeScript) Export(s *song.Song, out io.Writer) error {
 	return err
 }
 
-func exportChannel(c song.Channel, out io.Writer) error {
+func exportChannel(c *song.Channel, out io.Writer) error {
 	sixteenths := float64(0) // todo: consider higher?
 	if _, err := fmt.Fprintf(out, "\t\"%s\":[\n", c.Name); err != nil {
 		return err
 	}
-	for _, note := range c.Notes {
-		if note.Pitch != note.Silence {
+	for _, nt := range c.Notes {
+		if nt.Pitch != note.Silence {
 			fmt.Fprint(out, "\t\t")
 			if _, err := fmt.Fprintf(out, `%c{"duration":"%dn","note":"%c`,
-				'\t', note.Length, note.Pitch); err != nil {
+				'\t', nt.Length, nt.Pitch); err != nil {
 				return err
 			}
-			switch note.Halftone {
+			switch nt.Halftone {
 			case note.Sharp:
 				if _, err := fmt.Fprintf(out, `%c`, '#'); err != nil {
 					return err
@@ -51,18 +50,15 @@ func exportChannel(c song.Channel, out io.Writer) error {
 					return err
 				}
 			}
-			if note.Halftone != note.NoHalftone {
-
-			}
 			if _, err := fmt.Fprintf(out, `%d","time":%f,"velocity":1},%c`,
-				note.Octave,
+				nt.Octave,
 				sixteenths/8, '\n'); err != nil {
 				return err
 			}
 		}
-		length := 16.0 / float64(note.Length)
-		if note.Tuplet >= 3 { // todo consider 5-tuples etc...
-			length *= float64(note.Tuplet-1) / float64(note.Tuplet)
+		length := 16.0 / float64(nt.Length)
+		if nt.Tuplet >= 3 { // todo consider 5-tuples etc...
+			length *= float64(nt.Tuplet-1) / float64(nt.Tuplet)
 		}
 		sixteenths += length
 	}

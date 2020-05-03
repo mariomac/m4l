@@ -51,7 +51,7 @@ func (p *Parser) channelNode(s *song.Song) error {
 	chName := last.Submatch[0]
 	c, ok := s.Channels[chName]
 	if !ok {
-		c = &song.Channel{Name: chName}
+		c = &song.Channel{Name: chName, Instrument: song.DefaultInstrument}
 		c.Status.Octave = defaultOctave
 		s.Channels[chName] = c
 	}

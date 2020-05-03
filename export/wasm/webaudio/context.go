@@ -3,6 +3,7 @@
 package webaudio
 
 import (
+	"github.com/mariomac/msxmml/song"
 	"syscall/js"
 	"time"
 )
@@ -22,20 +23,20 @@ func (ac *AudioContext) Time() time.Duration {
 }
 
 // oscillator --> gain --> ctx.destination
-func (ac *AudioContext) NoteNodes(freq float64, adsr ADSR) *OscillatorNode {
+func (ac *AudioContext) NoteNodes(freq float64, adsr song.Instrument) *OscillatorNode {
 	gain := ac.val.Call("createGain")
 	gain.Call("connect", ac.val.Get("destination"))
 	gainObj := &Gain{val: gain}
 	gainObj.SetValueAtTime(0, ac.Time())
 	osc := ac.val.Call("createOscillator")
-	osc.Set("type", "square")
+	osc.Set("type", adsr.Wave)
 	osc.Call("connect", gain)
 	osc.Get("frequency").Set("value", freq)
 	osc.Call("start", ac.Time().Seconds())
 	return &OscillatorNode{
 		val:  osc,
 		ctx:  ac,
-		adsr: adsr,
+		inst: adsr,
 		gain: gainObj,
 	}
 }

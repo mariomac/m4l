@@ -5,22 +5,15 @@ package webaudio
 import (
 	"syscall/js"
 	"time"
-)
 
-type ADSR [4]struct { // attack decay sustain release
-	Val  float64
-	Time time.Duration
-}
+	"github.com/mariomac/msxmml/song"
+)
 
 type OscillatorNode struct {
 	val  js.Value
 	ctx  *AudioContext
-	adsr ADSR
+	inst song.Instrument
 	gain *Gain
-}
-
-func (on *OscillatorNode) Envelope(adsr ADSR) {
-	on.adsr = adsr
 }
 
 func (on *OscillatorNode) FrequencyAtTime(f float64, t time.Duration) {
@@ -33,7 +26,7 @@ func (on *OscillatorNode) TriggerEnvelope(frequency float64, t time.Duration) {
 	on.gain.val.Get("gain").Call("cancelScheduledValues", t.Seconds())
 	on.FrequencyAtTime(frequency, t)
 	on.gain.SetValueAtTime(0, ct+t)
-	for _, a := range on.adsr {
+	for _, a := range on.inst.Envelope {
 		on.gain.LinearRampToValueAtTime(a.Val, ct+t+a.Time)
 	}
 }

@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/mariomac/msxmml/export/wasm/webaudio"
-	"github.com/mariomac/msxmml/note"
 	"github.com/mariomac/msxmml/song"
+	"github.com/mariomac/msxmml/song/note"
 )
 
 func ExportWasm(s *song.Song) {
@@ -16,7 +16,7 @@ func ExportWasm(s *song.Song) {
 	}
 }
 
-var flatEquivs = map[note.Pitch]note.Pitch {
+var flatEquivs = map[note.Pitch]note.Pitch{
 	note.A: note.G,
 	note.B: note.A,
 	note.C: note.B,
@@ -27,13 +27,7 @@ var flatEquivs = map[note.Pitch]note.Pitch {
 }
 
 func exportChannel(ctx *webaudio.AudioContext, c *song.Channel) {
-	ch := NewChannel(ctx, Instrument{
-		adsr: webaudio.ADSR{
-			{1, 50 * time.Millisecond},
-			{0.7, 100 * time.Millisecond},
-			{0.7, 200 * time.Millisecond},
-			{0, 250 * time.Millisecond},
-		}})
+	ch := NewChannel(ctx, c.Instrument)
 	sixteenths := float64(0) // todo: consider higher?
 	for _, nt := range c.Notes {
 		if nt.Pitch != note.Silence {

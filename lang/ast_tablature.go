@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/mariomac/msxmml/note"
 	"github.com/mariomac/msxmml/song"
+	"github.com/mariomac/msxmml/song/note"
 )
 
 // tablature: (octave|note|pause|....)+
