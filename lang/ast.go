@@ -17,7 +17,7 @@ func Root(t *Tokenizer) (*song.Song, error) {
 	for !t.EOF() {
 		token := t.Get()
 		switch token.Type {
-		case Channel:
+		case ChannelID:
 			ch, err := ChannelNode(t)
 			if err != nil {
 				return nil, err
@@ -63,13 +63,13 @@ var tabRegex = regexp.MustCompile(`^(([a-zA-Z][+\-#]?\d*)|[<>]|\||(\{[^\{}]*}\d+
 func TablatureNode(t *Tokenizer) ([]byte, error) {
 	var tablature []byte
 	tok := t.Get()
-	if tok.Type != String && !tabRegex.Match(tok.Content) {
+	if tok.Type != 0 && !tabRegex.Match(tok.Content) {
 		return nil, unexpectedError(t, "a music tablature", tok.Content)
 	}
 	tablature = append(tablature, tok.Content...)
 	for t.Next() {
 		tok := t.Get()
-		if tok.Type != String && !tabRegex.Match(tok.Content) {
+		if tok.Type != 0 && !tabRegex.Match(tok.Content) {
 			return tablature, nil
 		}
 		tablature = append(tablature, tok.Content...)

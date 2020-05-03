@@ -7,28 +7,43 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var a Token = Token{Type: Note, Content: []byte(`a`)}
+
 func TestTokenizer_TwoChannels(t *testing.T) {
 	mml := `
+@0 <- abcdefgo1<ab#4.
+      abcde.e8fg
 
-@0 <- abcdefgo1<ab4#
-      abcdeefghwa3322
-
-@troloro<-abcdedgo1<ab4#
-	abcdeebbfghwa3322
+@troloro<-abcdedgo1<a
+	ab{cde}3e-3.. | abc
 `
 	tok := NewTokenizer(bytes.NewReader([]byte(mml)))
 	var tokens []Token
 	for tok.Next() {
 		tokens = append(tokens, tok.Get())
 	}
+
+	n := func(n string) Token {
+		return Token{Type: Note, Content: []byte(n)}
+	}
 	assert.Equal(t, []Token{
-		{Type: Channel, Content: []byte("@0")},
+		{Type: ChannelID, Content: []byte("@0")},
 		{Type: ChannelSendArrow, Content: []byte("<-")},
-		{Type: String, Content: []byte("abcdefgo1<ab4#")},
-		{Type: String, Content: []byte("abcdeefghwa3322")},
-		{Type: Channel, Content: []byte("@troloro")},
+		n("a"), n("b"), n("c"), n("d"), n("e"), n("f"), n("g"),
+		{Type: Octave, Content: []byte(`o1`)},
+		{Type: DecOctave, Content: []byte(`<`)},
+		n("a"), n("b#4."), n("a"), n("b"), n("c"), n("d"), n("e."), n("e8"), n("f"), n("g"),
+		{Type: ChannelID, Content: []byte("@troloro")},
 		{Type: ChannelSendArrow, Content: []byte("<-")},
-		{Type: String, Content: []byte("abcdedgo1<ab4#")},
-		{Type: String, Content: []byte("abcdeebbfghwa3322")}},
+		n("a"), n("b"), n("c"), n("d"), n("e"), n("d"), n("g"),
+		{Type: Octave, Content: []byte(`o1`)},
+		{Type: DecOctave, Content: []byte(`<`)},
+		n("a"), n("a"), n("b"),
+		{Type: OpenSection, Content: []byte(`{`)},
+		n("c"), n("d"), n("e"),
+		{Type: CloseTuplet, Content: []byte(`}3`)},
+		n("e-3.."),
+		{Type: Separator, Content: []byte(`|`)},
+		n("a"), n("b"), n("c")},
 		tokens)
 }

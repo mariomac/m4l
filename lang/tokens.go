@@ -5,15 +5,58 @@ import (
 	"fmt"
 	"io"
 	"regexp"
+	"strings"
 )
 
 type TokenType int
 
 const (
-	Channel TokenType = iota
+	Unknown TokenType = iota
+	ChannelID
 	ChannelSendArrow
-	String // any string, e.g. a tablature description
+	RampArrow
+	OpenSection
+	CloseSection
+	CloseTuplet
+	Separator
+	Note
+	Pause
+	Octave
+	IncOctave
+	DecOctave
 )
+
+var tokenDefs = []struct {
+	t TokenType
+	r *regexp.Regexp
+}{
+	{t: ChannelID, r: regexp.MustCompile(`^@\w+$`)},
+	{t: ChannelSendArrow, r: regexp.MustCompile(`^<-$`)},
+	{t: RampArrow, r: regexp.MustCompile(`^->$`)},
+	{t: OpenSection, r: regexp.MustCompile(`^\{$`)},
+	{t: CloseTuplet, r: regexp.MustCompile(`^\}\d+`)},
+	{t: CloseSection, r: regexp.MustCompile(`^\}$`)},
+	{t: Note, r: regexp.MustCompile(`^[a-gA-G][#+-]?\d*\.*$`)},
+	{t: Pause, r: regexp.MustCompile(`^[Rr]\d*$`)},
+	{t: Octave, r: regexp.MustCompile(`^[Oo]\d$`)},
+	{t: IncOctave, r: regexp.MustCompile(`^>$`)},
+	{t: DecOctave, r: regexp.MustCompile(`^<$`)},
+	{t: Separator, r: regexp.MustCompile(`^\|+$`)},
+}
+
+var tokens *regexp.Regexp
+
+func init() {
+	sb := strings.Builder{}
+	sb.WriteString("(")
+	for _, td := range tokenDefs {
+		regex := td.r.String()
+		sb.WriteString(regex[:len(regex)-1]) //removing trailing $
+		sb.WriteString(")|(")
+	}
+	sb.WriteString(`^\S+)`) // catching anything else as "unknown token"
+	tokens = regexp.MustCompile(sb.String())
+}
 
 type Tokenizer struct {
 	Row       int
@@ -29,10 +72,15 @@ func NewTokenizer(input io.Reader) *Tokenizer {
 	}
 }
 
-var tokens = regexp.MustCompile(`(@\w+)|(<-)|\S+|\|+`)
-
 func (t *Tokenizer) Next() bool {
 	for !t.EOF() {
+		// trimming leading spaces
+		i := 0
+		for i < len(t.lineRest) && (t.lineRest[i] == ' ' || t.lineRest[i] == '\t') {
+			i++
+		}
+		t.Col += i
+		t.lineRest = t.lineRest[i:]
 		idx := tokens.FindIndex(t.lineRest)
 		if idx != nil {
 			t.lastMatch = t.lineRest[idx[0]:idx[1]]
@@ -45,7 +93,7 @@ func (t *Tokenizer) Next() bool {
 	return false
 }
 
-func (t *Tokenizer) readMoreLines()  {
+func (t *Tokenizer) readMoreLines() {
 	var err error
 	t.lastMatch = nil
 	t.lineRest, err = t.input.ReadBytes('\n')
@@ -74,17 +122,11 @@ type Token struct {
 	Content []byte
 }
 
-var channel = regexp.MustCompile(`^@(\w+)$`)
-
-const arrow = "<-"
-
 func parseToken(token []byte) Token {
-	if ch := channel.FindSubmatch(token); ch != nil {
-		return Token{Type: Channel, Content: token}
+	for _, td := range tokenDefs {
+		if td.r.Match(token) {
+			return Token{Type: td.t, Content: token}
+		}
 	}
-	if string(token) == arrow {
-		return Token{Type: ChannelSendArrow, Content: token}
-	}
-	// todo: verify the correct format of the string
-	return Token{Type: String, Content: token}
+	return Token{Type: Unknown, Content: token}
 }

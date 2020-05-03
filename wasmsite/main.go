@@ -1,10 +1,13 @@
+// +build wasm
+
 package main
 
 import (
 	"bytes"
+	"syscall/js"
+
 	"github.com/mariomac/msxmml/export/wasm"
 	"github.com/mariomac/msxmml/lang"
-	"syscall/js"
 )
 
 func main() {
@@ -21,6 +24,11 @@ func main() {
 func tocalaSam() {
 	// https://musescore.com/user/20360426/scores/4880846
 	str := `
+@1 {
+	wave: sine
+	adsr: 50->100, 100->70, 200, 10
+}
+
 @1 <- o4 e8e8 r8 e8 r8 c8 e | g r < g r
       >c r8 <g r8 e | r8 a b b-8 a
       {g>eg}3 a f8 g8 | r8 e c8d8 <b
