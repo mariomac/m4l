@@ -2,6 +2,7 @@ package lang
 
 import (
 	"bytes"
+	"github.com/stretchr/testify/require"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -50,4 +51,27 @@ func TestTokenizer_TwoChannels(t *testing.T) {
 		{Type: Separator, Submatch: []string{}, Content: `|`, Row: 6, Col: 19},
 		n("a", 6, 21), n("b", 6, 22), n("c", 6, 23)},
 		tokens)
+}
+
+func TestTokenizer_Instrument(t *testing.T)  {
+	mml := `
+@voice {
+    wave: sine
+    adsr: 50->100, 100-> 70,200, 10
+}
+`
+	tok := NewTokenizer(bytes.NewReader([]byte(mml)))
+
+	next := func() Token {
+		require.True(t, tok.Next())
+		return tok.Get()
+	}
+	assert.Equal(t, Token{Type: ChannelID, Submatch: []string{"voice"}, Content: "@voice", Row: 2, Col: 1}, next())
+	assert.Equal(t, Token{Type: OpenSection, Content: "{", Submatch: []string{}, Row: 2, Col: 8}, next())
+	assert.Equal(t, Token{Type: MapEntry, Content: "wave: sine", Submatch: []string{"wave", "sine"}, Row:3, Col:5}, next())
+	assert.Equal(t, Token{Type: ADSRVector, Content: "adsr: 50->100, 100-> 70,200, 10",
+		Submatch: []string{"50", "100", "100", "70", "200", "10"}, Row:4, Col:5}, next())
+	assert.Equal(t, Token{Type: CloseSection, Content: "}", Submatch: []string{}, Row: 5, Col: 1}, next())
+
+	assert.False(t, tok.Next())
 }

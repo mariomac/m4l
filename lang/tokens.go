@@ -11,10 +11,11 @@ import (
 type TokenType int
 
 const (
-	Unknown TokenType = iota
+	AnyString TokenType = iota
 	ChannelID
 	ChannelSendArrow
-	RampArrow
+	MapEntry
+	ADSRVector
 	OpenSection
 	CloseSection
 	CloseTuplet
@@ -32,11 +33,12 @@ var tokenDefs = []struct {
 }{
 	{t: ChannelID, r: regexp.MustCompile(`^@(\w+)$`)},
 	{t: ChannelSendArrow, r: regexp.MustCompile(`^<-$`)},
-	{t: RampArrow, r: regexp.MustCompile(`^->$`)},
+	{t: ADSRVector, r: regexp.MustCompile(`^[Aa][Dd][Ss][Rr]\s*:\s*(\d+)\s*->\s*(\d+)\s*,\s*(\d+)\s*\->\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)$`)},
+	{t: MapEntry, r: regexp.MustCompile(`^(\w+)\s*:\s*(\w+)$`)},
 	{t: OpenSection, r: regexp.MustCompile(`^\{$`)},
 	{t: CloseTuplet, r: regexp.MustCompile(`^}(\d+)$`)},
 	{t: CloseSection, r: regexp.MustCompile(`^}$`)},
-	{t: Note, r: regexp.MustCompile(`^([a-gA-G])([#+-]?)(\d*)(\.*)$`)},
+	{t: Note, r: regexp.MustCompile(`^([a-gA-G])([#+\-]?)(\d*)(\.*)$`)},
 	{t: Silence, r: regexp.MustCompile(`^[Rr](\d*)$`)},
 	{t: Octave, r: regexp.MustCompile(`^[Oo](\d)$`)},
 	{t: IncOctave, r: regexp.MustCompile(`^>$`)},
@@ -131,5 +133,5 @@ func (t *Tokenizer) parseToken(token string) Token {
 			return Token{Type: td.t, Content: token, Submatch: submatches[1:], Row: t.row, Col: t.col}
 		}
 	}
-	return Token{Type: Unknown, Content: token, Row: t.row, Col: t.col}
+	return Token{Type: AnyString, Content: token, Row: t.row, Col: t.col}
 }

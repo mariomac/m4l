@@ -10,6 +10,9 @@ import (
 
 // tablature: (octave|note|pause|....)+
 func (p *Parser) tablatureNode(c *song.Channel) error {
+	if !p.t.Next() {
+		return p.eofErr()
+	}
 	startTupletIndex := -1
 	for !p.t.EOF() {
 		tok := p.t.Get()
@@ -36,14 +39,14 @@ func (p *Parser) tablatureNode(c *song.Channel) error {
 			}
 		case OpenSection:
 			if startTupletIndex >= 0 {
-				return TablatureError{tok, "can't open a tuple inside a tuple"}
+				return ParserError{tok, "can't open a tuple inside a tuple"}
 			}
 			startTupletIndex = len(c.Notes)
 		case CloseTuplet:
 			if err := parseApplyTuplet(tok, c, &startTupletIndex) ; err != nil {
 				return err
 			}
-			startTupletIndex = 0
+			startTupletIndex = -1
 		case Separator:
 		// just ignore
 		default:
@@ -126,7 +129,7 @@ func parseOctave(token Token, c *song.Channel) error {
 		panic(fmt.Sprintf("silence can't be %q! this is a bug", token.Submatch))
 	}
 	if err := assertOctave(oct); err != nil {
-		return TablatureError{token, err.Error()}
+		return ParserError{token, err.Error()}
 	}
 	c.Status.Octave = oct
 	return nil
@@ -143,7 +146,7 @@ func parseOctaveStep(token Token, c *song.Channel) error {
 		panic(fmt.Sprintf("invalid octave step %q! This is a bug", token.Content))
 	}
 	if err := assertOctave(oct); err != nil {
-		return TablatureError{token, err.Error()}
+		return ParserError{token, err.Error()}
 	}
 	c.Status.Octave = oct
 	return nil
@@ -158,14 +161,14 @@ func assertOctave(oct int) error {
 
 func parseApplyTuplet(token Token, c *song.Channel, startTupletIndex *int) error {
 	if *startTupletIndex < 0 {
-		return TablatureError{token, "closing a non-opened tuple"}
+		return ParserError{token, "closing a non-opened tuple"}
 	}
 	nTuple, err := strconv.Atoi(token.Submatch[0])
 	if err != nil {
 		panic(fmt.Sprintf("invalid tuple number %q! This is a bug", token.Submatch[0]))
 	}
 	if nTuple < 3 {
-		return TablatureError{token, "tuplet number should be at least 3"}
+		return ParserError{token, "tuplet number should be at least 3"}
 	}
 	for i := *startTupletIndex ; i < len(c.Notes) ; i++ {
 		c.Notes[i].Tuplet = nTuple
@@ -173,11 +176,3 @@ func parseApplyTuplet(token Token, c *song.Channel, startTupletIndex *int) error
 	return nil
 }
 
-type TablatureError struct {
-	t   Token
-	msg string
-}
-
-func (t TablatureError) Error() string {
-	return fmt.Sprintf("At %d,%d: %s", t.t.Row, t.t.Col, t.msg)
-}

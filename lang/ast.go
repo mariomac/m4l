@@ -15,6 +15,18 @@ const (
 	defaultLength = 4
 )
 
+type SyntaxError struct {
+	t Token
+}
+
+func (p SyntaxError) Error() string {
+	return fmt.Sprintf("%d:%d - Unexpected %q", p.t.Row, p.t.Col, p.t.Content)
+}
+
+func (p *Parser) eofErr() error {
+	return fmt.Errorf("unexpected EOF at position %d:%d", p.t.row, p.t.col)
+}
+
 type Parser struct {
 	t *Tokenizer
 }
@@ -42,11 +54,8 @@ func Parse(t *Tokenizer) (*song.Song, error) {
 	return s, nil
 }
 
-// channel: CHANNELID <- tablature
+// channel: CHANNELID ( '<-' tablature | '{' instumentDefinition '}' )
 func (p *Parser) channelNode(s *song.Song) error {
-	eofErr := func() error {
-		return fmt.Errorf("unexpected EOF at position %d:%d", p.t.row, p.t.col)
-	}
 	last := p.t.Get()
 	chName := last.Submatch[0]
 	c, ok := s.Channels[chName]
@@ -56,25 +65,29 @@ func (p *Parser) channelNode(s *song.Song) error {
 		s.Channels[chName] = c
 	}
 	if !p.t.Next() {
-		return eofErr()
+		return p.eofErr()
 	}
 	last = p.t.Get()
-	if last.Type != ChannelSendArrow {
+	switch last.Type {
+	case ChannelSendArrow:
+		if err := p.tablatureNode(c); err != nil {
+			return err
+		}
+	case OpenSection:
+		if err := p.instrumentDefinitionNode(c); err != nil {
+			return err
+		}
+	default:
 		return SyntaxError{t: last}
-	}
-	if !p.t.Next() {
-		return eofErr()
-	}
-	if err := p.tablatureNode(c); err != nil {
-		return err
 	}
 	return nil
 }
 
-type SyntaxError struct {
-	t Token
+type ParserError struct {
+	t   Token
+	msg string
 }
 
-func (p SyntaxError) Error() string {
-	return fmt.Sprintf("%d:%d - Unexpected %q", p.t.Row, p.t.Col, p.t.Content)
+func (t ParserError) Error() string {
+	return fmt.Sprintf("At %d,%d: %s", t.t.Row, t.t.Col, t.msg)
 }
