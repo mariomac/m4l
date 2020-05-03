@@ -73,6 +73,7 @@ func NewTokenizer(input io.Reader) *Tokenizer {
 }
 
 func (t *Tokenizer) Next() bool {
+	t.Col += len(t.lastMatch)
 	for !t.EOF() {
 		// trimming leading spaces
 		i := 0
@@ -85,7 +86,6 @@ func (t *Tokenizer) Next() bool {
 		if idx != nil {
 			t.lastMatch = t.lineRest[idx[0]:idx[1]]
 			t.lineRest = t.lineRest[idx[1]:]
-			t.Col += idx[0]
 			return true
 		}
 		t.readMoreLines()
@@ -114,19 +114,20 @@ func (t *Tokenizer) EOF() bool {
 }
 
 func (t *Tokenizer) Get() Token {
-	return parseToken(t.lastMatch)
+	return t.parseToken(t.lastMatch)
 }
 
 type Token struct {
-	Type    TokenType
-	Content []byte
+	Type     TokenType
+	Content  []byte
+	Row, Col int
 }
 
-func parseToken(token []byte) Token {
+func (t *Tokenizer) parseToken(token []byte) Token {
 	for _, td := range tokenDefs {
 		if td.r.Match(token) {
-			return Token{Type: td.t, Content: token}
+			return Token{Type: td.t, Content: token, Row: t.Row, Col: t.Col}
 		}
 	}
-	return Token{Type: Unknown, Content: token}
+	return Token{Type: Unknown, Content: token, Row: t.Row, Col: t.Col}
 }
