@@ -26,6 +26,7 @@ func main() {
 	panicIfErr(err)
 	defer out.Close()
 
+	Parse
 	s, err := lang.Root(lang.NewTokenizer(bytes.NewReader([]byte(str))))
 	panicIfErr(err)
 	panicIfErr(exp.Export(s, out))

@@ -20,7 +20,7 @@ const (
 	CloseTuplet
 	Separator
 	Note
-	Pause
+	Silence
 	Octave
 	IncOctave
 	DecOctave
@@ -37,7 +37,7 @@ var tokenDefs = []struct {
 	{t: CloseTuplet, r: regexp.MustCompile(`^}(\d+)$`)},
 	{t: CloseSection, r: regexp.MustCompile(`^}$`)},
 	{t: Note, r: regexp.MustCompile(`^([a-gA-G])([#+-]?)(\d*)(\.*)$`)},
-	{t: Pause, r: regexp.MustCompile(`^[Rr](\d*)$`)},
+	{t: Silence, r: regexp.MustCompile(`^[Rr](\d*)$`)},
 	{t: Octave, r: regexp.MustCompile(`^[Oo](\d)$`)},
 	{t: IncOctave, r: regexp.MustCompile(`^>$`)},
 	{t: DecOctave, r: regexp.MustCompile(`^<$`)},

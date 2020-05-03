@@ -23,11 +23,12 @@ func main() {
 
 func tocalaSam() {
 	// https://musescore.com/user/20360426/scores/4880846
+	//@1 {
+	//wave: sine
+	//adsr: 50->100, 100->70, 200, 10
+	//}
 	str := `
-@1 {
-	wave: sine
-	adsr: 50->100, 100->70, 200, 10
-}
+
 
 @1 <- o4 e8e8 r8 e8 r8 c8 e | g r < g r
       >c r8 <g r8 e | r8 a b b-8 a
@@ -38,7 +39,7 @@ func tocalaSam() {
      {ca>c}3 d <b8>c8 | r8 <a f8g8 e
 `
 
-	s, err := lang.Root(lang.NewTokenizer(bytes.NewReader([]byte(str))))
+	s, err := lang.Parse(lang.NewTokenizer(bytes.NewReader([]byte(str))))
 	panicIfErr(err)
 	wasm.ExportWasm(s)
 }

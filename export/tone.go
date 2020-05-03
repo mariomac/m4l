@@ -6,7 +6,7 @@ import (
 
 	"github.com/mariomac/msxmml/song"
 
-	"github.com/mariomac/msxmml/solfa"
+	"github.com/mariomac/msxmml/note"
 )
 
 type Exporter interface {
@@ -35,23 +35,23 @@ func exportChannel(c song.Channel, out io.Writer) error {
 		return err
 	}
 	for _, note := range c.Notes {
-		if note.Pitch != solfa.Silence {
+		if note.Pitch != note.Silence {
 			fmt.Fprint(out, "\t\t")
 			if _, err := fmt.Fprintf(out, `%c{"duration":"%dn","note":"%c`,
 				'\t', note.Length, note.Pitch); err != nil {
 				return err
 			}
 			switch note.Halftone {
-			case solfa.Sharp:
+			case note.Sharp:
 				if _, err := fmt.Fprintf(out, `%c`, '#'); err != nil {
 					return err
 				}
-			case solfa.Flat:
+			case note.Flat:
 				if _, err := fmt.Fprintf(out, `%c`, 'b'); err != nil {
 					return err
 				}
 			}
-			if note.Halftone != solfa.NoHalftone {
+			if note.Halftone != note.NoHalftone {
 
 			}
 			if _, err := fmt.Fprintf(out, `%d","time":%f,"velocity":1},%c`,
