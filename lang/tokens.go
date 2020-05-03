@@ -30,15 +30,15 @@ var tokenDefs = []struct {
 	t TokenType
 	r *regexp.Regexp
 }{
-	{t: ChannelID, r: regexp.MustCompile(`^@\w+$`)},
+	{t: ChannelID, r: regexp.MustCompile(`^@(\w+)$`)},
 	{t: ChannelSendArrow, r: regexp.MustCompile(`^<-$`)},
 	{t: RampArrow, r: regexp.MustCompile(`^->$`)},
 	{t: OpenSection, r: regexp.MustCompile(`^\{$`)},
-	{t: CloseTuplet, r: regexp.MustCompile(`^\}\d+`)},
-	{t: CloseSection, r: regexp.MustCompile(`^\}$`)},
-	{t: Note, r: regexp.MustCompile(`^[a-gA-G][#+-]?\d*\.*$`)},
-	{t: Pause, r: regexp.MustCompile(`^[Rr]\d*$`)},
-	{t: Octave, r: regexp.MustCompile(`^[Oo]\d$`)},
+	{t: CloseTuplet, r: regexp.MustCompile(`^}(\d+)$`)},
+	{t: CloseSection, r: regexp.MustCompile(`^}$`)},
+	{t: Note, r: regexp.MustCompile(`^([a-gA-G])([#+-]?)(\d*)(\.*)$`)},
+	{t: Pause, r: regexp.MustCompile(`^[Rr](\d*)$`)},
+	{t: Octave, r: regexp.MustCompile(`^[Oo](\d)$`)},
 	{t: IncOctave, r: regexp.MustCompile(`^>$`)},
 	{t: DecOctave, r: regexp.MustCompile(`^<$`)},
 	{t: Separator, r: regexp.MustCompile(`^\|+$`)},
@@ -59,11 +59,11 @@ func init() {
 }
 
 type Tokenizer struct {
-	Row       int
-	Col       int
+	row       int
+	col       int
 	input     *bufio.Reader
-	lineRest  []byte //line that is being currently parsed
-	lastMatch []byte
+	lineRest  string //line that is being currently parsed
+	lastMatch string
 }
 
 func NewTokenizer(input io.Reader) *Tokenizer {
@@ -73,16 +73,16 @@ func NewTokenizer(input io.Reader) *Tokenizer {
 }
 
 func (t *Tokenizer) Next() bool {
-	t.Col += len(t.lastMatch)
+	t.col += len(t.lastMatch)
 	for !t.EOF() {
 		// trimming leading spaces
 		i := 0
 		for i < len(t.lineRest) && (t.lineRest[i] == ' ' || t.lineRest[i] == '\t') {
 			i++
 		}
-		t.Col += i
+		t.col += i
 		t.lineRest = t.lineRest[i:]
-		idx := tokens.FindIndex(t.lineRest)
+		idx := tokens.FindStringIndex(t.lineRest)
 		if idx != nil {
 			t.lastMatch = t.lineRest[idx[0]:idx[1]]
 			t.lineRest = t.lineRest[idx[1]:]
@@ -95,18 +95,18 @@ func (t *Tokenizer) Next() bool {
 
 func (t *Tokenizer) readMoreLines() {
 	var err error
-	t.lastMatch = nil
-	t.lineRest, err = t.input.ReadBytes('\n')
+	t.lastMatch = ""
+	t.lineRest, err = t.input.ReadString('\n')
 	if err != nil {
 		if err == io.EOF {
 			t.input = nil
-			t.lineRest = nil
+			t.lineRest = ""
 			return
 		}
 		panic(fmt.Errorf("can't read next line: %w", err))
 	}
-	t.Col = 1
-	t.Row++
+	t.col = 1
+	t.row++
 }
 
 func (t *Tokenizer) EOF() bool {
@@ -119,15 +119,17 @@ func (t *Tokenizer) Get() Token {
 
 type Token struct {
 	Type     TokenType
-	Content  []byte
+	Content  string
+	Submatch []string
 	Row, Col int
 }
 
-func (t *Tokenizer) parseToken(token []byte) Token {
+func (t *Tokenizer) parseToken(token string) Token {
 	for _, td := range tokenDefs {
-		if td.r.Match(token) {
-			return Token{Type: td.t, Content: token, Row: t.Row, Col: t.Col}
+		submatches := td.r.FindStringSubmatch(token)
+		if submatches != nil {
+			return Token{Type: td.t, Content: token, Submatch: submatches[1:], Row: t.row, Col: t.col}
 		}
 	}
-	return Token{Type: Unknown, Content: token, Row: t.Row, Col: t.Col}
+	return Token{Type: Unknown, Content: token, Row: t.row, Col: t.col}
 }
