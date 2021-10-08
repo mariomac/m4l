@@ -8,28 +8,28 @@ import (
 	"strings"
 )
 
-type TokenType int
+type TokenType string
 
 const (
-	AnyString TokenType = iota
-	LoopTag
-	ConstName
-	Assign
-	OpenKey
-	CloseKey
-	MapEntry
-	AdsrVector
-	Separator
-	ChannelSync
-	Comment
-	Note
-	Silence
-	Octave
-	IncOctave
-	DecOctave
-	Number
-	ChannelId
-	SendArrow
+	AnyString TokenType = "AnyString"
+	LoopTag TokenType = "LoopTag"
+	ConstName TokenType = "ConstName"
+	Assign TokenType = "Assign"
+	OpenKey TokenType = "OpenKey"
+	CloseKey TokenType = "CloseKey"
+	MapEntry TokenType = "MapEntry"
+	AdsrVector TokenType = "AdsrVector"
+	Separator TokenType = "Separator"
+	ChannelSync TokenType = "ChannelSync"
+	Comment TokenType = "Comment"
+	Note TokenType = "Note"
+	Silence TokenType = "Silence"
+	Octave TokenType = "Octave"
+	IncOctave TokenType = "IncOctave"
+	DecOctave TokenType = "DecOctave"
+	Number TokenType = "Number"
+	ChannelId TokenType = "ChannelId"
+	SendArrow TokenType = "SendArrow"
 )
 
 var tokenDefs = []struct {
@@ -142,4 +142,15 @@ func (t *Tokenizer) parseToken(token string) Token {
 		}
 	}
 	return Token{Type: AnyString, Content: token, Row: t.row, Col: t.col}
+}
+
+func (f *Token) getConstID() string {
+	f.assertType(ConstName)
+	return f.Submatch[0]
+}
+
+func (f *Token) assertType(expected TokenType) {
+	if f.Type != expected {
+		panic(fmt.Sprintf("expected type: %s. Got: %s", expected, f.Type))
+	}
 }

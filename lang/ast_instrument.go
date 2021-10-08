@@ -10,7 +10,7 @@ import (
 )
 
 // instrumentDefinition: 'wave:' \w+ \n 'adsr:' num->num, num->num, num, num
-func (p *Parser) instrumentDefinitionNode(c *song.Channel) error {
+func (p *lang.Parser) instrumentDefinitionNode(c *song.Channel) error {
 	if !p.t.Next() {
 		return p.eofErr()
 	}
@@ -20,7 +20,7 @@ func (p *Parser) instrumentDefinitionNode(c *song.Channel) error {
 		switch tok.Type {
 		case ADSRVector:
 			if definedAdsr {
-				return ParserError{tok, "defining ADSR envelope twice"}
+				return lang.ParserError{tok, "defining ADSR envelope twice"}
 			}
 			definedAdsr = true
 			attackLevel := float64(atoi(tok.Submatch[1])) / 100.0
@@ -34,22 +34,22 @@ func (p *Parser) instrumentDefinitionNode(c *song.Channel) error {
 		case lang.MapEntry:
 			switch strings.ToLower(tok.Submatch[0]) {
 			case "adsr":
-				return ParserError{tok, "adsr should have a value like: 20->100, 50->80, 100, 120"}
+				return lang.ParserError{tok, "adsr should have a value like: 20->100, 50->80, 100, 120"}
 			case "wave":
 				if definedWave {
-					return ParserError{tok, "wave is defined twice"}
+					return lang.ParserError{tok, "wave is defined twice"}
 				}
 				definedWave = true
 				// todo: maybe validate wave values?
 				c.Instrument.Wave = tok.Submatch[1]
 			default:
-				return ParserError{tok, "only 'adsr' and 'wave' properties are allowed"}
+				return lang.ParserError{tok, "only 'adsr' and 'wave' properties are allowed"}
 			}
 		case CloseSection:
 			p.t.Next()
 			return nil
 		default:
-			return SyntaxError{tok}
+			return lang.SyntaxError{tok}
 		}
 		p.t.Next()
 	}

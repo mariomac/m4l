@@ -9,7 +9,7 @@ import (
 )
 
 // tablature: (octave|note|pause|....)+
-func (p *Parser) tablatureNode(c *song.Channel) error {
+func (p *lang.Parser) tablatureNode(c *song.Channel) error {
 	if !p.t.Next() {
 		return p.eofErr()
 	}
@@ -39,7 +39,7 @@ func (p *Parser) tablatureNode(c *song.Channel) error {
 			}
 		case OpenSection:
 			if startTupletIndex >= 0 {
-				return ParserError{tok, "can't open a tuple inside a tuple"}
+				return lang.ParserError{tok, "can't open a tuple inside a tuple"}
 			}
 			startTupletIndex = len(c.Notes)
 		case CloseTuplet:
@@ -64,7 +64,7 @@ func (p *Parser) tablatureNode(c *song.Channel) error {
 func parseNote(token lang.Token, c *song.Channel) (note.Note, error) {
 	n := note.Note{
 		Pitch:    getPitch(token.Submatch[0][0]),
-		Length:   defaultLength,
+		Length:   lang.defaultLength,
 		Octave:   c.Status.Octave,
 		Halftone: note.NoHalftone,
 		Dots:     len(token.Submatch[3]),
@@ -88,9 +88,9 @@ func parseNote(token lang.Token, c *song.Channel) (note.Note, error) {
 			panic(fmt.Sprintf("wrong length for note: %#v! this is a bug. Err: %s",
 				token, err.Error()))
 		}
-		if l < minLength || l > maxLength {
+		if l < lang.minLength || l > lang.maxLength {
 			return n, fmt.Errorf(
-				"wrong note length: %d. Must be in range %d to %d", l, minLength, maxLength)
+				"wrong note length: %d. Must be in range %d to %d", l, lang.minLength, lang.maxLength)
 		}
 		n.Length = l
 	}
@@ -112,7 +112,7 @@ func getPitch(c byte) note.Pitch {
 func parseSilence(token lang.Token) (note.Note, error) {
 	n := note.Note{Pitch: note.Silence}
 	if len(token.Submatch[0]) == 0 {
-		n.Length = defaultLength
+		n.Length = lang.defaultLength
 		return n, nil
 	}
 	length, err := strconv.Atoi(token.Submatch[0])
@@ -129,7 +129,7 @@ func parseOctave(token lang.Token, c *song.Channel) error {
 		panic(fmt.Sprintf("silence can't be %q! this is a bug", token.Submatch))
 	}
 	if err := assertOctave(oct); err != nil {
-		return ParserError{token, err.Error()}
+		return lang.ParserError{token, err.Error()}
 	}
 	c.Status.Octave = oct
 	return nil
@@ -146,29 +146,29 @@ func parseOctaveStep(token lang.Token, c *song.Channel) error {
 		panic(fmt.Sprintf("invalid octave step %q! This is a bug", token.Content))
 	}
 	if err := assertOctave(oct); err != nil {
-		return ParserError{token, err.Error()}
+		return lang.ParserError{token, err.Error()}
 	}
 	c.Status.Octave = oct
 	return nil
 }
 
 func assertOctave(oct int) error {
-	if oct < minOctave || oct > maxOctave {
-		return fmt.Errorf("octave must be in range [%d..%d]. Actual: %d", minOctave, maxOctave, oct)
+	if oct < lang.minOctave || oct > lang.maxOctave {
+		return fmt.Errorf("octave must be in range [%d..%d]. Actual: %d", lang.minOctave, lang.maxOctave, oct)
 	}
 	return nil
 }
 
 func parseApplyTuplet(token lang.Token, c *song.Channel, startTupletIndex *int) error {
 	if *startTupletIndex < 0 {
-		return ParserError{token, "closing a non-opened tuple"}
+		return lang.ParserError{token, "closing a non-opened tuple"}
 	}
 	nTuple, err := strconv.Atoi(token.Submatch[0])
 	if err != nil {
 		panic(fmt.Sprintf("invalid tuple number %q! This is a bug", token.Submatch[0]))
 	}
 	if nTuple < 3 {
-		return ParserError{token, "tuplet number should be at least 3"}
+		return lang.ParserError{token, "tuplet number should be at least 3"}
 	}
 	for i := *startTupletIndex ; i < len(c.Notes) ; i++ {
 		c.Notes[i].Tuplet = nTuple

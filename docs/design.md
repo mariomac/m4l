@@ -33,9 +33,9 @@ loop:
 ## Grammar
 
 ```
-program := variable* statement* ('loop:' statement*)?
+program := constantDef* statement* ('loop:' statement*)?
 
-variable := ID ':=' (instrumentDef | tablature+)
+constantDef := ID ':=' (instrumentDef | tablature+)
 
 instrumentDef := '{' mapEntry* ('adsr:' adsrVector)? mapEntry* '}'
 

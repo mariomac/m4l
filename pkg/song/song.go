@@ -6,9 +6,37 @@ import (
 	"github.com/mariomac/msxmml/pkg/song/note"
 )
 
+const defaultOctave = 4
+
+// TODO: test all
 type Song struct {
-	Constants map[string]*TablatureItem
-	Blocks []SyncedBlock
+	Constants map[string]Tablature
+	Blocks    []SyncedBlock
+}
+
+type Tablature []TablatureItem
+
+func (s *Song) AddSyncedBlock() {
+	s.Blocks = append(s.Blocks, SyncedBlock{Channels: map[string]*Channel{}})
+}
+
+func (s *Song) endBlock() *SyncedBlock {
+	if len(s.Blocks) == 0 {
+		return nil
+	}
+	return &s.Blocks[len(s.Blocks)-1]
+}
+
+func (s *Song) AddItems(channelName string, items ...TablatureItem) {
+	if len(s.Blocks) == 0 {
+		s.AddSyncedBlock()
+	}
+	ch, ok := s.endBlock().Channels[channelName]
+	if !ok || ch == nil {
+		ch = &Channel{}
+		s.endBlock().Channels[channelName] = ch
+	}
+	ch.Items = append(ch.Items, items...)
 }
 
 // TablatureItem pseudo-union type: whatever you can find in a tablature
@@ -21,17 +49,13 @@ type TablatureItem struct {
 }
 
 type Channel struct {
-	Status struct {
-		Octave     int
-		Instrument Instrument
-	}
 	Items []TablatureItem
 }
 
 // SyncedBlock contains channels that sound at the same time. The SyncedBlock hasn't finished
 // until all the channels finish
 type SyncedBlock struct {
-	Channels  map[string]*Channel
+	Channels map[string]*Channel
 }
 
 type Instrument struct {

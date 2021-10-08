@@ -22,7 +22,7 @@ func TestTwoChannelParse(t *testing.T) {
 @1<-acbcdedgo2>ab#4
      abcdeebbfga38
 `
-	s, err := Parse(lang.NewTokenizer(bytes.NewReader([]byte(mml))))
+	s, err := lang.Parse(lang.NewTokenizer(bytes.NewReader([]byte(mml))))
 	require.NoError(t, err)
 	require.Len(t, s.Channels, 2)
 	require.Contains(t, s.Channels, "foo")
@@ -46,7 +46,7 @@ func TestInstruments(t *testing.T) {
 @another <- cda
 `
 
-	s, err := Parse(lang.NewTokenizer(bytes.NewReader([]byte(mml))))
+	s, err := lang.Parse(lang.NewTokenizer(bytes.NewReader([]byte(mml))))
 	require.NoError(t, err)
 	require.Len(t, s.Channels, 2)
 	require.Contains(t, s.Channels, "voice")
