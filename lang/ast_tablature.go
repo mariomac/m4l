@@ -3,10 +3,9 @@ package lang
 import (
 	"fmt"
 	"github.com/mariomac/msxmml/pkg/lang"
+	"github.com/mariomac/msxmml/pkg/song"
+	"github.com/mariomac/msxmml/pkg/song/note"
 	"strconv"
-
-	"github.com/mariomac/msxmml/song"
-	"github.com/mariomac/msxmml/song/note"
 )
 
 // tablature: (octave|note|pause|....)+

@@ -2,11 +2,11 @@ package wasm
 
 import (
 	"fmt"
+	"github.com/mariomac/msxmml/pkg/song"
+	"github.com/mariomac/msxmml/pkg/song/note"
 	"time"
 
 	"github.com/mariomac/msxmml/export/wasm/webaudio"
-	"github.com/mariomac/msxmml/song"
-	"github.com/mariomac/msxmml/song/note"
 )
 
 func ExportWasm(s *song.Song) {

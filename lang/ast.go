@@ -3,8 +3,7 @@ package lang
 import (
 	"fmt"
 	"github.com/mariomac/msxmml/pkg/lang"
-
-	"github.com/mariomac/msxmml/song"
+	"github.com/mariomac/msxmml/pkg/song"
 )
 
 const (
@@ -24,8 +23,17 @@ func (p SyntaxError) Error() string {
 	return fmt.Sprintf("%d:%d - Unexpected %q", p.t.Row, p.t.Col, p.t.Content)
 }
 
+type UnexpecedEofError struct {
+	Row int
+	Col int
+}
+
+func (p UnexpecedEofError) Error() string {
+	return fmt.Sprintf("%d:%d - Unexpected EOF", p.Row, p.Col)
+}
+
 func (p *Parser) eofErr() error {
-	return fmt.Errorf("unexpected EOF at position %d:%d", p.t.row, p.t.col)
+	return UnexpecedEofError{Row: p.t.row, Col: p.t.col}
 }
 
 type Parser struct {

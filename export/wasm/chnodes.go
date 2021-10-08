@@ -1,7 +1,7 @@
 package wasm
 
 import (
-	"github.com/mariomac/msxmml/song"
+	"github.com/mariomac/msxmml/pkg/song"
 	"time"
 
 	"github.com/mariomac/msxmml/export/wasm/webaudio"

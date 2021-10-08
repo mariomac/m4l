@@ -89,7 +89,7 @@ $voice := {
 		require.True(t, tok.Next())
 		return tok.Get()
 	}
-	assert.Equal(t, Token{Type: VarName, Submatch: []string{"voice"}, Content: "$voice", Row: 2, Col: 1}, next())
+	assert.Equal(t, Token{Type: ConstName, Submatch: []string{"voice"}, Content: "$voice", Row: 2, Col: 1}, next())
 	assert.Equal(t, Token{Type: Assign, Submatch: []string{}, Content: ":=", Row: 2, Col: 8}, next())
 	assert.Equal(t, Token{Type: OpenKey, Content: "{", Submatch: []string{}, Row: 2, Col: 11}, next())
 	assert.Equal(t, Token{Type: MapEntry, Content: "wave: sine", Submatch: []string{"wave", "sine"}, Row: 3, Col: 5}, next())

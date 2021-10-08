@@ -3,10 +3,9 @@
 package webaudio
 
 import (
+	"github.com/mariomac/msxmml/pkg/song"
 	"syscall/js"
 	"time"
-
-	"github.com/mariomac/msxmml/song"
 )
 
 type OscillatorNode struct {

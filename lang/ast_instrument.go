@@ -3,11 +3,10 @@ package lang
 import (
 	"fmt"
 	"github.com/mariomac/msxmml/pkg/lang"
+	"github.com/mariomac/msxmml/pkg/song"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/mariomac/msxmml/song"
 )
 
 // instrumentDefinition: 'wave:' \w+ \n 'adsr:' num->num, num->num, num, num

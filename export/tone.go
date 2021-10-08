@@ -2,10 +2,9 @@ package export
 
 import (
 	"fmt"
-	"github.com/mariomac/msxmml/song/note"
+	"github.com/mariomac/msxmml/pkg/song"
+	"github.com/mariomac/msxmml/pkg/song/note"
 	"io"
-
-	"github.com/mariomac/msxmml/song"
 )
 
 type Exporter interface {

@@ -3,10 +3,9 @@ package lang
 import (
 	"bytes"
 	"github.com/mariomac/msxmml/pkg/lang"
+	"github.com/mariomac/msxmml/pkg/song"
 	"testing"
 	"time"
-
-	"github.com/mariomac/msxmml/song"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

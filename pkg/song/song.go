@@ -1,13 +1,19 @@
 package song
 
 import (
+	"github.com/mariomac/msxmml/pkg/song/note"
 	"time"
-
-	"github.com/mariomac/msxmml/song/note"
 )
 
 type Song struct {
+	Instruments map[string]Instrument
+
 	Channels map[string]*Channel
+}
+
+type TablatureItem struct {
+	VariableRef *string
+	Note *note.Note
 }
 
 type Channel struct {
