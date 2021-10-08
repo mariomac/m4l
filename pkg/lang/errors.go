@@ -2,6 +2,10 @@ package lang
 
 import "fmt"
 
+func errHeader(t Token) string {
+	return fmt.Sprintf("%d:%d - Unexpected EOF", t.Row, t.Col)
+}
+
 type SyntaxError struct {
 	t Token
 }
@@ -27,6 +31,11 @@ func (r RedefinitionError) Error() string {
 	return errHeader(r.t) + fmt.Sprintf("can't redefine: %v", r.t.Content)
 }
 
-func errHeader(t Token) string {
-	return fmt.Sprintf("%d:%d - Unexpected EOF", t.Row, t.Col)
+type ParserError struct {
+	t   Token
+	msg string
+}
+
+func (p ParserError) Error() string {
+	return errHeader(p.t) + p.msg
 }

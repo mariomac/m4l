@@ -9,7 +9,7 @@ import (
 
 func TestRedefinitionError(t *testing.T) {
 	_, err := Parse(NewTokenizer(strings.NewReader(`
-$foo := 1234
+$foo := { wave: square }
 $bar := 1234
 $foo := 3321
 `)))

@@ -1,12 +1,11 @@
 package lang
 
 import (
-	"bytes"
-	"github.com/mariomac/msxmml/pkg/lang"
-	"github.com/mariomac/msxmml/pkg/song"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/mariomac/msxmml/pkg/song"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -14,6 +13,7 @@ import (
 // TODO TEST that a non-closed tuplet returns error
 // TODO TEST that closing a non-open tuplet returns error
 
+/*
 func TestTwoChannelParse(t *testing.T) {
 	mml := `
 @foo <- abcdefgo2<ab#4
@@ -34,25 +34,20 @@ func TestTwoChannelParse(t *testing.T) {
 	ch = s.Channels["1"]
 	assert.Equal(t, "1", ch.Name)
 	assert.Len(t, ch.Notes, 21)
-}
+}*/
 
-func TestInstruments(t *testing.T) {
-	mml := `
-@voice {
+func TestInstrument(t *testing.T) {
+	s, err := Parse(NewTokenizer(strings.NewReader(`
+$voice := {
 	wave: sine
 	adsr: 30->100, 100->60, 200, 210
 }
-@voice <- abc
-@another <- cda
-`
-
-	s, err := lang.Parse(lang.NewTokenizer(bytes.NewReader([]byte(mml))))
+`)))
 	require.NoError(t, err)
-	require.Len(t, s.Channels, 2)
-	require.Contains(t, s.Channels, "voice")
-	ch := s.Channels["voice"]
-	assert.Equal(t, "voice", ch.Name)
-	assert.Len(t, ch.Notes, 3)
+	require.Contains(t, s.Constants, "voice")
+	require.Len(t, s.Constants["voice"], 1)
+	voice := s.Constants["voice"][0]
+	require.NotNil(t, voice.Instrument)
 	assert.Equal(t, song.Instrument{
 		Wave: "sine",
 		Envelope: []song.TimePoint{
@@ -61,12 +56,6 @@ func TestInstruments(t *testing.T) {
 			{0.6, 200 * time.Millisecond},
 			{0, 210 * time.Millisecond},
 		},
-	}, ch.Instrument)
-
-	require.Contains(t, s.Channels, "another")
-	ch = s.Channels["another"]
-	assert.Equal(t, "another", ch.Name)
-	assert.Len(t, ch.Notes, 3)
-	assert.Equal(t, song.DefaultInstrument, ch.Instrument)
+	}, *voice.Instrument)
 
 }
