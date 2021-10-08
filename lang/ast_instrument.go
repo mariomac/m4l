@@ -2,6 +2,7 @@ package lang
 
 import (
 	"fmt"
+	"github.com/mariomac/msxmml/pkg/lang"
 	"strconv"
 	"strings"
 	"time"
@@ -31,7 +32,7 @@ func (p *Parser) instrumentDefinitionNode(c *song.Channel) error {
 				{Time: time.Duration(atoi(tok.Submatch[4])) * time.Millisecond, Val: decayLevel},
 				{Time: time.Duration(atoi(tok.Submatch[5])) * time.Millisecond, Val: 0},
 			}
-		case MapEntry:
+		case lang.MapEntry:
 			switch strings.ToLower(tok.Submatch[0]) {
 			case "adsr":
 				return ParserError{tok, "adsr should have a value like: 20->100, 50->80, 100, 120"}

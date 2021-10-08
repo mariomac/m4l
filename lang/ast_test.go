@@ -2,6 +2,7 @@ package lang
 
 import (
 	"bytes"
+	"github.com/mariomac/msxmml/pkg/lang"
 	"testing"
 	"time"
 
@@ -22,7 +23,7 @@ func TestTwoChannelParse(t *testing.T) {
 @1<-acbcdedgo2>ab#4
      abcdeebbfga38
 `
-	s, err := Parse(NewTokenizer(bytes.NewReader([]byte(mml))))
+	s, err := Parse(lang.NewTokenizer(bytes.NewReader([]byte(mml))))
 	require.NoError(t, err)
 	require.Len(t, s.Channels, 2)
 	require.Contains(t, s.Channels, "foo")
@@ -46,7 +47,7 @@ func TestInstruments(t *testing.T) {
 @another <- cda
 `
 
-	s, err := Parse(NewTokenizer(bytes.NewReader([]byte(mml))))
+	s, err := Parse(lang.NewTokenizer(bytes.NewReader([]byte(mml))))
 	require.NoError(t, err)
 	require.Len(t, s.Channels, 2)
 	require.Contains(t, s.Channels, "voice")

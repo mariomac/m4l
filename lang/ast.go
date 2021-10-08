@@ -2,6 +2,7 @@ package lang
 
 import (
 	"fmt"
+	"github.com/mariomac/msxmml/pkg/lang"
 
 	"github.com/mariomac/msxmml/song"
 )
@@ -16,7 +17,7 @@ const (
 )
 
 type SyntaxError struct {
-	t Token
+	t lang.Token
 }
 
 func (p SyntaxError) Error() string {
@@ -28,13 +29,13 @@ func (p *Parser) eofErr() error {
 }
 
 type Parser struct {
-	t *Tokenizer
+	t *lang.Tokenizer
 }
 
 // Convention: tokenizer always receives a tokenizer with a token available, excepting the Root
 
 // song: channel+
-func Parse(t *Tokenizer) (*song.Song, error) {
+func Parse(t *lang.Tokenizer) (*song.Song, error) {
 	p := &Parser{
 		t: t,
 	}
@@ -84,7 +85,7 @@ func (p *Parser) channelNode(s *song.Song) error {
 }
 
 type ParserError struct {
-	t   Token
+	t   lang.Token
 	msg string
 }
 

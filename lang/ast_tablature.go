@@ -2,6 +2,7 @@ package lang
 
 import (
 	"fmt"
+	"github.com/mariomac/msxmml/pkg/lang"
 	"strconv"
 
 	"github.com/mariomac/msxmml/song"
@@ -17,23 +18,23 @@ func (p *Parser) tablatureNode(c *song.Channel) error {
 	for !p.t.EOF() {
 		tok := p.t.Get()
 		switch tok.Type {
-		case Note:
+		case lang.Note:
 			if n, err := parseNote(tok, c); err != nil {
 				return err
 			} else {
 				c.Notes = append(c.Notes, n)
 			}
-		case Silence:
+		case lang.Silence:
 			if n, err := parseSilence(tok); err != nil {
 				return err
 			} else {
 				c.Notes = append(c.Notes, n)
 			}
-		case Octave:
+		case lang.Octave:
 			if err := parseOctave(tok, c); err != nil {
 				return err
 			}
-		case IncOctave, DecOctave:
+		case lang.IncOctave, lang.DecOctave:
 			if err := parseOctaveStep(tok, c); err != nil {
 				return err
 			}
@@ -47,7 +48,7 @@ func (p *Parser) tablatureNode(c *song.Channel) error {
 				return err
 			}
 			startTupletIndex = -1
-		case Separator:
+		case lang.Separator:
 		// just ignore
 		default:
 			// end of tablature, return
@@ -61,7 +62,7 @@ func (p *Parser) tablatureNode(c *song.Channel) error {
 // A note should come represented by an array where
 // 0: pitch - 1: halftone - 2: length - 3: dots
 // todo: return error if a given note can't be sharp or flat
-func parseNote(token Token, c *song.Channel) (note.Note, error) {
+func parseNote(token lang.Token, c *song.Channel) (note.Note, error) {
 	n := note.Note{
 		Pitch:    getPitch(token.Submatch[0][0]),
 		Length:   defaultLength,
@@ -109,7 +110,7 @@ func getPitch(c byte) note.Pitch {
 	panic(fmt.Sprintf("pitch can't be '%c'! this is a bug", c))
 }
 
-func parseSilence(token Token) (note.Note, error) {
+func parseSilence(token lang.Token) (note.Note, error) {
 	n := note.Note{Pitch: note.Silence}
 	if len(token.Submatch[0]) == 0 {
 		n.Length = defaultLength
@@ -123,7 +124,7 @@ func parseSilence(token Token) (note.Note, error) {
 	return n, nil
 }
 
-func parseOctave(token Token, c *song.Channel) error {
+func parseOctave(token lang.Token, c *song.Channel) error {
 	oct, err := strconv.Atoi(token.Submatch[0])
 	if err != nil {
 		panic(fmt.Sprintf("silence can't be %q! this is a bug", token.Submatch))
@@ -135,7 +136,7 @@ func parseOctave(token Token, c *song.Channel) error {
 	return nil
 }
 
-func parseOctaveStep(token Token, c *song.Channel) error {
+func parseOctaveStep(token lang.Token, c *song.Channel) error {
 	oct := c.Status.Octave
 	switch token.Content[0] {
 	case '<':
@@ -159,7 +160,7 @@ func assertOctave(oct int) error {
 	return nil
 }
 
-func parseApplyTuplet(token Token, c *song.Channel, startTupletIndex *int) error {
+func parseApplyTuplet(token lang.Token, c *song.Channel, startTupletIndex *int) error {
 	if *startTupletIndex < 0 {
 		return ParserError{token, "closing a non-opened tuple"}
 	}

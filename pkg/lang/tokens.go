@@ -12,52 +12,46 @@ type TokenType int
 
 const (
 	AnyString TokenType = iota
-	ChannelID
-	ChannelSendArrow
+	LoopTag
+	Let
+	VarName
+	Assign
+	OpenKey
+	CloseKey
 	MapEntry
-	ADSRVector
-	OpenSection
-	CloseSection
-	CloseTuplet
+	AdsrVector
 	Separator
 	Note
 	Silence
 	Octave
 	IncOctave
 	DecOctave
+	Number
+	ChannelId
+	SendArrow
 )
 
 var tokenDefs = []struct {
 	t TokenType
 	r *regexp.Regexp
 }{
-	{t: ChannelID, r: regexp.MustCompile(`^@(\w+)$`)},
-	{t: ChannelSendArrow, r: regexp.MustCompile(`^<-$`)},
-	{t: ADSRVector, r: regexp.MustCompile(`^[Aa][Dd][Ss][Rr]\s*:\s*(\d+)\s*->\s*(\d+)\s*,\s*(\d+)\s*\->\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)$`)},
+	{t: SendArrow, r: regexp.MustCompile(`^<-$`)},
+	{t: LoopTag, r: regexp.MustCompile(`^[Ll][Oo][Oo][Pp]\s*:$`)},
+	{t: OpenKey, r: regexp.MustCompile(`^\{$`)},
+	{t: CloseKey, r: regexp.MustCompile(`^}$`)},
+	{t: AdsrVector, r: regexp.MustCompile(`^[Aa][Dd][Ss][Rr]\s*:\s*(\d+)\s*->\s*(\d+)\s*,\s*(\d+)\s*\->\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)$`)},
 	{t: MapEntry, r: regexp.MustCompile(`^(\w+)\s*:\s*(\w+)$`)},
-	{t: OpenSection, r: regexp.MustCompile(`^\{$`)},
-	{t: CloseTuplet, r: regexp.MustCompile(`^}(\d+)$`)},
-	{t: CloseSection, r: regexp.MustCompile(`^}$`)},
+	{t: Separator, r: regexp.MustCompile(`^\|+$`)},
+	{t: VarName, r: regexp.MustCompile(`^\$(\w+)$`)},
+	{t: Assign, r: regexp.MustCompile(`^:=$`)},
+	{t: ChannelId, r: regexp.MustCompile(`^@(\w+)$`)},
+	// Tablature stuff needs to go at the bottom, to not get confusion with other language grammar items
 	{t: Note, r: regexp.MustCompile(`^([a-gA-G])([#+\-]?)(\d*)(\.*)$`)},
 	{t: Silence, r: regexp.MustCompile(`^[Rr](\d*)$`)},
 	{t: Octave, r: regexp.MustCompile(`^[Oo](\d)$`)},
 	{t: IncOctave, r: regexp.MustCompile(`^>$`)},
 	{t: DecOctave, r: regexp.MustCompile(`^<$`)},
-	{t: Separator, r: regexp.MustCompile(`^\|+$`)},
-}
-
-var tokens *regexp.Regexp
-
-func init() {
-	sb := strings.Builder{}
-	sb.WriteString("(")
-	for _, td := range tokenDefs {
-		regex := td.r.String()
-		sb.WriteString(regex[:len(regex)-1]) //removing trailing $
-		sb.WriteString(")|(")
-	}
-	sb.WriteString(`^\S+)`) // catching anything else as "unknown token"
-	tokens = regexp.MustCompile(sb.String())
+	{t: Number, r: regexp.MustCompile(`^(\d+)$`)},
 }
 
 type Tokenizer struct {
@@ -66,11 +60,22 @@ type Tokenizer struct {
 	input     *bufio.Reader
 	lineRest  string //line that is being currently parsed
 	lastMatch string
+	tokens    *regexp.Regexp
 }
 
 func NewTokenizer(input io.Reader) *Tokenizer {
+	sb := strings.Builder{}
+	sb.WriteString("(")
+	for _, r := range tokenDefs {
+		regex := r.r.String()
+		sb.WriteString(regex[:len(regex)-1]) //removing trailing $
+		sb.WriteString(")|(")
+	}
+	sb.WriteString(`^\S+)`) // catching anything else as "unknown token"
+
 	return &Tokenizer{
-		input: bufio.NewReader(input),
+		input:  bufio.NewReader(input),
+		tokens: regexp.MustCompile(sb.String()),
 	}
 }
 
@@ -84,7 +89,7 @@ func (t *Tokenizer) Next() bool {
 		}
 		t.col += i
 		t.lineRest = t.lineRest[i:]
-		idx := tokens.FindStringIndex(t.lineRest)
+		idx := t.tokens.FindStringIndex(t.lineRest)
 		if idx != nil {
 			t.lastMatch = t.lineRest[idx[0]:idx[1]]
 			t.lineRest = t.lineRest[idx[1]:]

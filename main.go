@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"github.com/mariomac/msxmml/export"
 	"github.com/mariomac/msxmml/lang"
+	lang2 "github.com/mariomac/msxmml/pkg/lang"
 	"os"
 )
 
@@ -27,7 +28,7 @@ func main() {
 	defer out.Close()
 
 	Parse
-	s, err := lang.Root(lang.NewTokenizer(bytes.NewReader([]byte(str))))
+	s, err := lang.Root(lang2.NewTokenizer(bytes.NewReader([]byte(str))))
 	panicIfErr(err)
 	panicIfErr(exp.Export(s, out))
 }
