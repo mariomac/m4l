@@ -1,28 +1,31 @@
 package song
 
 import (
-	"github.com/mariomac/msxmml/pkg/song/note"
 	"time"
+
+	"github.com/mariomac/msxmml/pkg/song/note"
 )
 
 type Song struct {
-	Instruments map[string]Instrument
-
-	Channels map[string]*Channel
+	Constants map[string]*TablatureItem
+	Channels  map[string]*Channel
 }
 
+// TablatureItem pseudo-union type: whatever you can find in a tablature
 type TablatureItem struct {
+	Instrument  *Instrument
 	VariableRef *string
-	Note *note.Note
+	Note        *note.Note
+	SetOctave   *int
+	IncOctave   *int // negative: decrements
 }
 
 type Channel struct {
 	Status struct {
-		Octave int
+		Octave     int
+		Instrument Instrument
 	}
-	Name       string
-	Notes      []note.Note
-	Instrument Instrument
+	Items []TablatureItem
 }
 
 type Instrument struct {
