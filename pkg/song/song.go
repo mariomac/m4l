@@ -8,7 +8,7 @@ import (
 
 type Song struct {
 	Constants map[string]*TablatureItem
-	Channels  map[string]*Channel
+	Blocks []SyncedBlock
 }
 
 // TablatureItem pseudo-union type: whatever you can find in a tablature
@@ -26,6 +26,12 @@ type Channel struct {
 		Instrument Instrument
 	}
 	Items []TablatureItem
+}
+
+// SyncedBlock contains channels that sound at the same time. The SyncedBlock hasn't finished
+// until all the channels finish
+type SyncedBlock struct {
+	Channels  map[string]*Channel
 }
 
 type Instrument struct {

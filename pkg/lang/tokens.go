@@ -20,6 +20,8 @@ const (
 	MapEntry
 	AdsrVector
 	Separator
+	ChannelSync
+	Comment
 	Note
 	Silence
 	Octave
@@ -34,6 +36,7 @@ var tokenDefs = []struct {
 	t TokenType
 	r *regexp.Regexp
 }{
+	{t: Comment, r: regexp.MustCompile(`^#\.*$`) },
 	{t: SendArrow, r: regexp.MustCompile(`^<-$`)},
 	{t: LoopTag, r: regexp.MustCompile(`^[Ll][Oo][Oo][Pp]\s*:$`)},
 	{t: OpenKey, r: regexp.MustCompile(`^\{$`)},
@@ -44,6 +47,7 @@ var tokenDefs = []struct {
 	{t: ConstName, r: regexp.MustCompile(`^\$(\w+)$`)},
 	{t: Assign, r: regexp.MustCompile(`^:=$`)},
 	{t: ChannelId, r: regexp.MustCompile(`^@(\w+)$`)},
+	{t: ChannelSync, r: regexp.MustCompile(`^-{2,}$`)},
 	// Tablature stuff needs to go at the bottom, to not get confusion with other language grammar items
 	{t: Note, r: regexp.MustCompile(`^([a-gA-G])([#+\-]?)(\d*)(\.*)$`)},
 	{t: Silence, r: regexp.MustCompile(`^[Rr](\d*)$`)},

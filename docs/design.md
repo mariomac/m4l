@@ -18,12 +18,13 @@ $piece := o4 e8e8 r8 c8 e
 @channel1 <- $instrument1 $piece
 @channel2 <- $instrument2 r16 $piece
 
-# sync barrier. Music doesn't continue until all channels have finished (one dash at least) 
+# sync barrier. Music doesn't continue until all channels have finished (two dash at least) 
 
---------
+--
 
 # loop can include channels and sync barriers. It is an infinite loop, so it does not have sense
 # nest loops or put anything after the loop 
+# loop tag also acts as a synced block
 loop:
 
 @channel3 <- a1 b2 c3 c4 c5
@@ -34,7 +35,7 @@ loop:
 ```
 program := variable* statement* ('loop:' statement*)?
 
-variable := 'let' ID (instrumentDef | tablature+)
+variable := ID ':=' (instrumentDef | tablature+)
 
 instrumentDef := '{' mapEntry* ('adsr:' adsrVector)? mapEntry* '}'
 
@@ -43,7 +44,10 @@ tuplet := '{' tablature '}' NUM
 
 ID := $(\w)+
 
-statement := channelId '<-' tablature+ 
+statement := channelFill | SYNC 
+channelFill := CHANNEL_ID '<-' tablature+
+SYNC := '-'*
+
 ```
 
 ## Binary compilation

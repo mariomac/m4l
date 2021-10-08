@@ -74,14 +74,24 @@ func TestTokenizer_TwoChannels(t *testing.T) {
 	assert.Equal(t, n("a", 6, 21), next())
 	assert.Equal(t, n("b", 6, 22), next())
 	assert.Equal(t, n("c", 6, 23), next())
+
+	assert.False(t, tok.Next())
+
 }
 
-func TestTokenizer_Instrument(t *testing.T) {
+func TestTokenizer_ConstantDefinitions(t *testing.T) {
 	mml := `
 $voice := {
     wave: sine
     adsr: 50->100, 100-> 70,200, 10
 }
+$intro := ab-4..
+
+@ch1 <- $intro$intro$intro
+loop:
+@ch1 <- c
+---
+@ch1 <- d e 
 `
 	tok := NewTokenizer(bytes.NewReader([]byte(mml)))
 
@@ -96,6 +106,24 @@ $voice := {
 	assert.Equal(t, Token{Type: AdsrVector, Content: "adsr: 50->100, 100-> 70,200, 10",
 		Submatch: []string{"50", "100", "100", "70", "200", "10"}, Row: 4, Col: 5}, next())
 	assert.Equal(t, Token{Type: CloseKey, Content: "}", Submatch: []string{}, Row: 5, Col: 1}, next())
+	assert.Equal(t, Token{Type: ConstName, Content: "$intro", Submatch: []string{"intro"}, Row: 6, Col: 1}, next())
+	assert.Equal(t, Token{Type: Assign, Content: ":=", Submatch: []string{}, Row: 6, Col: 8}, next())
+	assert.Equal(t, Token{Type: Note, Content: "a", Submatch: []string{"a", "", "", ""}, Row: 6, Col: 11}, next())
+	assert.Equal(t, Token{Type: Note, Content: "b-4..", Submatch: []string{"b", "-", "4", ".."}, Row: 6, Col: 12}, next())
+	assert.Equal(t, Token{Type: ChannelId, Content: "@ch1", Submatch: []string{"ch1"}, Row: 8, Col: 1}, next())
+	assert.Equal(t, Token{Type: SendArrow, Content: "<-", Submatch: []string{}, Row: 8, Col: 6}, next())
+	assert.Equal(t, Token{Type: ConstName, Content: "$intro", Submatch: []string{"intro"}, Row: 8, Col: 9}, next())
+	assert.Equal(t, Token{Type: ConstName, Content: "$intro", Submatch: []string{"intro"}, Row: 8, Col: 15}, next())
+	assert.Equal(t, Token{Type: ConstName, Content: "$intro", Submatch: []string{"intro"}, Row: 8, Col: 21}, next())
+	assert.Equal(t, Token{Type: LoopTag, Content: "loop:", Submatch: []string{}, Row: 9, Col: 1}, next())
+	assert.Equal(t, Token{Type: ChannelId, Content: "@ch1", Submatch: []string{"ch1"}, Row: 10, Col: 1}, next())
+	assert.Equal(t, Token{Type: SendArrow, Content: "<-", Submatch: []string{}, Row: 10, Col: 6}, next())
+	assert.Equal(t, Token{Type: Note, Content: "c", Submatch: []string{"c", "", "", ""}, Row: 10, Col: 9}, next())
+	assert.Equal(t, Token{Type: ChannelSync, Content: "---", Submatch: []string{}, Row: 11, Col: 1}, next())
+	assert.Equal(t, Token{Type: ChannelId, Content: "@ch1", Submatch: []string{"ch1"}, Row: 12, Col: 1}, next())
+	assert.Equal(t, Token{Type: SendArrow, Content: "<-", Submatch: []string{}, Row: 12, Col: 6}, next())
+	assert.Equal(t, Token{Type: Note, Content: "d", Submatch: []string{"d", "", "", ""}, Row: 12, Col: 9}, next())
+	assert.Equal(t, Token{Type: Note, Content: "e", Submatch: []string{"e", "", "", ""}, Row: 12, Col: 11}, next())
 
 	assert.False(t, tok.Next())
 }
