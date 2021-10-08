@@ -56,7 +56,6 @@ func Parse(t *Tokenizer) (*song.Song, error) {
 		default:
 			return nil, SyntaxError{t: token}
 		}
-		p.t.Next()
 	}
 	return s, nil
 }
@@ -81,18 +80,19 @@ func (p *Parser) constantDefNode(s *song.Song) error {
 	tok = p.t.Get()
 	switch tok.Type {
 	case OpenKey:
-		inst, err := p.instrumentDefinitionNode(s)
+		inst, err := p.instrumentDefinitionNode()
 		if err != nil {
 			return err
 		}
 		s.Constants[id] = song.Tablature{{Instrument: &inst}}
 	default:
-		tabl, err := p.tablatureNode(s)
+		tabl, err := p.tablatureNode()
 		if err != nil {
 			return err
 		}
 		s.Constants[id] = tabl
 	}
+	// not running p.t.Next as it was the last statement in both instrument and tablature nodes
 	return nil
 }
 
@@ -107,7 +107,7 @@ func (p *Parser) statementNode(s *song.Song) error {
 }
 
 // instrumentDef := '{' mapEntry* ('adsr:' adsrVector)? mapEntry* '}'
-func (p *Parser) instrumentDefinitionNode(s *song.Song) (song.Instrument, error) {
+func (p *Parser) instrumentDefinitionNode() (song.Instrument, error) {
 	inst := song.Instrument{}
 	if !p.t.Next() {
 		return inst, p.eofErr()
@@ -144,6 +144,7 @@ func (p *Parser) instrumentDefinitionNode(s *song.Song) (song.Instrument, error)
 				return inst, ParserError{tok, "only 'adsr' and 'wave' properties are allowed"}
 			}
 		case CloseKey:
+			p.t.Next()
 			return inst, nil
 		default:
 			return inst, SyntaxError{tok}
@@ -160,9 +161,4 @@ func atoi(num string) int {
 		panic(fmt.Sprintf("Wrong number %q! This is a bug: %s", num, err.Error()))
 	}
 	return n
-}
-
-// constantDef := ID ':=' (instrumentDef | tablature+)
-func (p *Parser) tablatureNode(s *song.Song) (song.Tablature, error) {
-	return song.Tablature{}, nil
 }

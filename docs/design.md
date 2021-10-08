@@ -35,12 +35,13 @@ loop:
 ```
 program := constantDef* statement* ('loop:' statement*)?
 
-constantDef := ID ':=' (instrumentDef | tablature+)
+constantDef := ID ':=' (instrumentDef | tablature)
 
 instrumentDef := '{' mapEntry* ('adsr:' adsrVector)? mapEntry* '}'
 
 tablature := (ID | NOTE | SILENCE | OCTAVE | INCOCT | DECOCT | tuplet | '|')+
-tuplet := '{' tablature '}' NUM
+
+tuplet := '{' (NOTE|OCTAVE|INCOCT|DECOCT) + '}' NUM
 
 ID := $(\w)+
 

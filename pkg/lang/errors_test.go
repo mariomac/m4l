@@ -10,10 +10,10 @@ import (
 func TestRedefinitionError(t *testing.T) {
 	_, err := Parse(NewTokenizer(strings.NewReader(`
 $foo := { wave: square }
-$bar := 1234
-$foo := 3321
+$bar := abce
+$foo := ffe
 `)))
-	require.IsType(t, RedefinitionError{}, err)
+	require.IsTypef(t, RedefinitionError{}, err, "%#v", err)
 	terr := err.(RedefinitionError)
 	assert.Equal(t, 4, terr.t.Row)
 	assert.Equal(t, 1, terr.t.Col)

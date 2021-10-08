@@ -27,6 +27,5 @@ type Note struct {
 	Length   int // as a divisor 1: whole note
 	Tuplet   int // e.g. 3 means this note is part of a triplet
 	Halftone Halftone
-	Octave   int
 	Dots     int // number of dots
 }

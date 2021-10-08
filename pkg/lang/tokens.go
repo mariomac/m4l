@@ -25,7 +25,7 @@ const (
 	Note TokenType = "Note"
 	Silence TokenType = "Silence"
 	Octave TokenType = "Octave"
-	IncOctave TokenType = "IncOctave"
+	IncOctave TokenType = "OctaveStep"
 	DecOctave TokenType = "DecOctave"
 	Number TokenType = "Number"
 	ChannelId TokenType = "ChannelId"
