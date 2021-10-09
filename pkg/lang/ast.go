@@ -1,10 +1,7 @@
 package lang
 
 import (
-	"fmt"
-	"strconv"
 	"strings"
-	"time"
 
 	"github.com/mariomac/msxmml/pkg/song"
 )
@@ -98,6 +95,7 @@ func (p *Parser) constantDefNode(s *song.Song) error {
 
 // ('loop:' statement*)
 func (p *Parser) loopNode(s *song.Song) error {
+	// guardar un indice que diga en qué sinced node empieza la cosa
 	return nil
 }
 
@@ -121,16 +119,9 @@ func (p *Parser) instrumentDefinitionNode() (song.Instrument, error) {
 				return inst, ParserError{tok, "defining ADSR envelope twice"}
 			}
 			definedAdsr = true
-			attackLevel := float64(atoi(tok.Submatch[1])) / 100.0
-			decayLevel := float64(atoi(tok.Submatch[3])) / 100.0
-			inst.Envelope = []song.TimePoint{
-				{Time: time.Duration(atoi(tok.Submatch[0])) * time.Millisecond, Val: attackLevel},
-				{Time: time.Duration(atoi(tok.Submatch[2])) * time.Millisecond, Val: decayLevel},
-				{Time: time.Duration(atoi(tok.Submatch[4])) * time.Millisecond, Val: decayLevel},
-				{Time: time.Duration(atoi(tok.Submatch[5])) * time.Millisecond, Val: 0},
-			}
+			inst.Envelope = tok.getAdsr()
 		case MapEntry:
-			switch strings.ToLower(tok.Submatch[0]) {
+			switch strings.ToLower(tok.getMapKey()) {
 			case "adsr":
 				return inst, ParserError{tok, "adsr should have a value like: 20->100, 50->80, 100, 120"}
 			case "wave":
@@ -139,7 +130,7 @@ func (p *Parser) instrumentDefinitionNode() (song.Instrument, error) {
 				}
 				definedWave = true
 				// todo: maybe validate wave values?
-				inst.Wave = tok.Submatch[1]
+				inst.Wave = tok.getWave()
 			default:
 				return inst, ParserError{tok, "only 'adsr' and 'wave' properties are allowed"}
 			}
@@ -154,11 +145,85 @@ func (p *Parser) instrumentDefinitionNode() (song.Instrument, error) {
 	return inst, nil
 }
 
-// panics as the regexp should have avoided filtering any unparseable number
-func atoi(num string) int {
-	n, err := strconv.Atoi(num)
-	if err != nil {
-		panic(fmt.Sprintf("Wrong number %q! This is a bug: %s", num, err.Error()))
+// tablature := (ID | NOTE | SILENCE | OCTAVE | INCOCT | DECOCT | tuplet | '|')+
+func (p *Parser) tablatureNode() (song.Tablature, error) {
+	t := song.Tablature{}
+	for !p.t.EOF() {
+		tok := p.t.Get()
+		switch tok.Type {
+		case Note:
+			if n, err := tok.getNote(); err != nil {
+				return nil, err
+			} else {
+				t = append(t, song.TablatureItem{Note: &n})
+			}
+		case Silence:
+			n := tok.getSilence()
+			t = append(t, song.TablatureItem{Note: &n})
+		case Octave:
+			o := tok.getOctave()
+			t = append(t, song.TablatureItem{SetOctave: &o})
+		case OctaveStep:
+			o := tok.getOctaveStep()
+			t = append(t, song.TablatureItem{OctaveStep: &o})
+		case OpenKey:
+			if tu, err := p.tupletNode(); err != nil {
+				return nil, err
+			} else {
+				t = append(t, tu...)
+			}
+		case Separator:
+		// just ignore
+		default:
+			// end of tablature, return
+			return t, nil
+		}
+		p.t.Next()
 	}
-	return n
+	return t, nil
+}
+
+// tuplet := '{' (NOTE|OCTAVE|INCOCT|DECOCT) + '}' NUM
+func (p *Parser) tupletNode() (song.Tablature, error) {
+	if !p.t.Next() {
+		return nil, p.eofErr()
+	}
+	t := song.Tablature{}
+	for !p.t.EOF() {
+		tok := p.t.Get()
+		switch tok.Type {
+		case Note:
+			if n, err := tok.getNote(); err != nil {
+				return nil, err
+			} else {
+				t = append(t, song.TablatureItem{Note: &n})
+			}
+		case Silence:
+			n := tok.getSilence()
+			t = append(t, song.TablatureItem{Note: &n})
+		case Octave:
+			o := tok.getOctave()
+			t = append(t, song.TablatureItem{SetOctave: &o})
+		case OctaveStep:
+			o := tok.getOctaveStep()
+			t = append(t, song.TablatureItem{OctaveStep: &o})
+		case CloseTuple:
+			tn := tok.getTupletNumber()
+			for n := range t {
+				if t[n].Note != nil {
+					t[n].Note.Tuplet = tn
+				}
+			}
+			p.t.Next()
+			return t, nil
+		case Separator:
+		// just ignore
+		case AnyString:
+			return nil, SyntaxError{tok}
+		default:
+			return nil, p.eofErr()
+		}
+		p.t.Next()
+	}
+	return nil, p.eofErr()
 }
