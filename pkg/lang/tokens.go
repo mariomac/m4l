@@ -277,3 +277,8 @@ func (tok *Token) getWave() string {
 	// TODO: validate wave values?
 	return tok.Submatch[1]
 }
+
+func (t *Token) getChannelId() string {
+	t.assertType(ChannelId)
+	return t.Submatch[0]
+}

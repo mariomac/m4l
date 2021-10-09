@@ -31,6 +31,7 @@ func Parse(t *Tokenizer) (*song.Song, error) {
 	}
 	s := &song.Song{
 		Constants: map[string]song.Tablature{},
+		LoopIndex: -1,
 	}
 	s.AddSyncedBlock()
 
@@ -46,8 +47,10 @@ func Parse(t *Tokenizer) (*song.Song, error) {
 			if err := p.loopNode(s); err != nil {
 				return nil, err
 			}
-		case ChannelId, ChannelSync:
-			if err := p.statementNode(s); err != nil {
+		case ChannelSync:
+			s.AddSyncedBlock()
+		case ChannelId:
+			if err := p.channelFillNode(s); err != nil {
 				return nil, err
 			}
 		default:
@@ -93,14 +96,13 @@ func (p *Parser) constantDefNode(s *song.Song) error {
 	return nil
 }
 
-// ('loop:' statement*)
 func (p *Parser) loopNode(s *song.Song) error {
-	// guardar un indice que diga en qué sinced node empieza la cosa
-	return nil
-}
-
-// statement := channelFill | SYNC
-func (p *Parser) statementNode(s *song.Song) error {
+	if s.LoopIndex >= 0 {
+		return ParserError{t: p.t.Get(), msg: "duplicate 'loop:' tag"}
+	}
+	s.AddSyncedBlock()
+	s.LoopIndex = len(s.Blocks)
+	p.t.Next()
 	return nil
 }
 
@@ -226,4 +228,28 @@ func (p *Parser) tupletNode() (song.Tablature, error) {
 		p.t.Next()
 	}
 	return nil, p.eofErr()
+}
+
+func (p *Parser) channelFillNode(s *song.Song) error {
+	tok := p.t.Get()
+	channelId := tok.getChannelId()
+	if !p.t.Next() {
+		return p.eofErr()
+	}
+	tok = p.t.Get()
+	if tok.Type != SendArrow {
+		return SyntaxError{t: tok}
+	}
+	if !p.t.Next() {
+		return p.eofErr()
+	}
+	tab, err := p.tablatureNode()
+	if err != nil {
+		return err
+	}
+	// tablature might be empty. Return error or just accept it?
+	s.AddItems(channelId, tab...)
+
+	// not advancing the tokenizer. After a tablature, the token points to the next statement
+	return nil
 }

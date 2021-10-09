@@ -12,6 +12,9 @@ const defaultOctave = 4
 type Song struct {
 	Constants map[string]Tablature
 	Blocks    []SyncedBlock
+	// the index of the Synced block where the loop starts
+	// negative number if no loop
+	LoopIndex int
 }
 
 type Tablature []TablatureItem
