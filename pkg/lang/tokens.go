@@ -18,7 +18,8 @@ type TokenType string
 const (
 	AnyString   TokenType = "AnyString"
 	LoopTag     TokenType = "LoopTag"
-	ConstName   TokenType = "ConstName"
+	ConstDef    TokenType = "ConstDef"
+	ConstRef    TokenType = "ConstRef"
 	Assign      TokenType = "Assign"
 	OpenKey     TokenType = "OpenKey"
 	CloseKey    TokenType = "CloseKey"
@@ -50,7 +51,8 @@ var tokenDefs = []struct {
 	{t: AdsrVector, r: regexp.MustCompile(`^[Aa][Dd][Ss][Rr]\s*:\s*(\d+)\s*->\s*(\d+)\s*,\s*(\d+)\s*\->\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)$`)},
 	{t: MapEntry, r: regexp.MustCompile(`^(\w+)\s*:\s*(\w+)$`)},
 	{t: Separator, r: regexp.MustCompile(`^\|+$`)},
-	{t: ConstName, r: regexp.MustCompile(`^\$(\w+)$`)},
+	{t: ConstDef, r: regexp.MustCompile(`^\$(\w+)\s*:=$`)},
+	{t: ConstRef, r: regexp.MustCompile(`^\$(\w+)$`)},
 	{t: Assign, r: regexp.MustCompile(`^:=$`)},
 	{t: ChannelId, r: regexp.MustCompile(`^@(\w+)$`)},
 	{t: ChannelSync, r: regexp.MustCompile(`^-{2,}$`)},
@@ -157,8 +159,13 @@ func (f *Token) assertType(expected TokenType) {
 	}
 }
 
-func (f *Token) getConstID() string {
-	f.assertType(ConstName)
+func (f *Token) getConstDefId() string {
+	f.assertType(ConstDef)
+	return f.Submatch[0]
+}
+
+func (f *Token) getConstRefId() string {
+	f.assertType(ConstRef)
 	return f.Submatch[0]
 }
 
@@ -183,7 +190,7 @@ func (f *Token) getOctaveStep() int {
 	case '>':
 		return +1
 	default:
-		panic(fmt.Sprintf("BUG detected. Invalid octave step %q", t.Content))
+		panic(fmt.Sprintf("BUG detected. Invalid octave step %q", f.Content))
 	}
 }
 

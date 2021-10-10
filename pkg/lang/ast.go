@@ -1,6 +1,7 @@
 package lang
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/mariomac/msxmml/pkg/song"
@@ -39,7 +40,7 @@ func Parse(t *Tokenizer) (*song.Song, error) {
 	for !p.t.EOF() {
 		token := p.t.Get()
 		switch token.Type {
-		case ConstName:
+		case ConstDef:
 			if err := p.constantDefNode(s); err != nil {
 				return nil, err
 			}
@@ -49,6 +50,7 @@ func Parse(t *Tokenizer) (*song.Song, error) {
 			}
 		case ChannelSync:
 			s.AddSyncedBlock()
+			p.t.Next()
 		case ChannelId:
 			if err := p.channelFillNode(s); err != nil {
 				return nil, err
@@ -63,16 +65,9 @@ func Parse(t *Tokenizer) (*song.Song, error) {
 // constantDef := ID ':=' (instrumentDef | tablature+)
 func (p *Parser) constantDefNode(s *song.Song) error {
 	tok := p.t.Get()
-	id := tok.getConstID()
+	id := tok.getConstDefId()
 	if _, ok := s.Constants[id]; ok {
 		return RedefinitionError{tok}
-	}
-	if !p.t.Next() {
-		return p.eofErr()
-	}
-	tok = p.t.Get()
-	if tok.Type != Assign {
-		return SyntaxError{tok}
 	}
 	if !p.t.Next() {
 		return p.eofErr()
@@ -86,7 +81,7 @@ func (p *Parser) constantDefNode(s *song.Song) error {
 		}
 		s.Constants[id] = song.Tablature{{Instrument: &inst}}
 	default:
-		tabl, err := p.tablatureNode()
+		tabl, err := p.tablatureNode(s)
 		if err != nil {
 			return err
 		}
@@ -148,11 +143,18 @@ func (p *Parser) instrumentDefinitionNode() (song.Instrument, error) {
 }
 
 // tablature := (ID | NOTE | SILENCE | OCTAVE | INCOCT | DECOCT | tuplet | '|')+
-func (p *Parser) tablatureNode() (song.Tablature, error) {
+func (p *Parser) tablatureNode(s *song.Song) (song.Tablature, error) {
 	t := song.Tablature{}
 	for !p.t.EOF() {
 		tok := p.t.Get()
 		switch tok.Type {
+		case ConstRef:
+			// todo: test that unexisting const id returns an error
+			id := tok.getConstRefId()
+			if _, ok := s.Constants[id]; !ok {
+				return nil, ParserError{t: tok, msg: fmt.Sprintf("constant %q not defined", id)}
+			}
+			t = append(t, song.TablatureItem{ConstantRef: &id})
 		case Note:
 			if n, err := tok.getNote(); err != nil {
 				return nil, err
@@ -243,7 +245,7 @@ func (p *Parser) channelFillNode(s *song.Song) error {
 	if !p.t.Next() {
 		return p.eofErr()
 	}
-	tab, err := p.tablatureNode()
+	tab, err := p.tablatureNode(s)
 	if err != nil {
 		return err
 	}
