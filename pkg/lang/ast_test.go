@@ -95,4 +95,44 @@ loop:
 	//	check loop label
 	assert.Equal(t, 1, s.LoopIndex)
 
+	// check synced block ch1 and ch2 channel statements
+	require.Len(t, s.Blocks[1].Channels, 2)
+	// @ch1 <- r4a>
+	require.Len(t, s.Blocks[1].Channels["ch1"].Items, 3)
+	assert.Equal(t,
+		&note.Note{Pitch: note.Silence, Length: 4},
+		s.Blocks[1].Channels["ch1"].Items[0].Note)
+	assert.Equal(t,
+		&note.Note{Pitch: note.A, Length: defaultLength},
+		s.Blocks[1].Channels["ch1"].Items[1].Note)
+	assert.Equal(t,
+		1,
+		*s.Blocks[1].Channels["ch1"].Items[2].OctaveStep)
+
+	// @ch2 <- aco2 | d
+	require.Len(t, s.Blocks[1].Channels["ch2"].Items, 4)
+	assert.Equal(t,
+		&note.Note{Pitch: note.A, Length: defaultLength},
+		s.Blocks[1].Channels["ch2"].Items[0].Note)
+	assert.Equal(t,
+		&note.Note{Pitch: note.C, Length: defaultLength},
+		s.Blocks[1].Channels["ch2"].Items[1].Note)
+	assert.Equal(t,
+		2,
+		*s.Blocks[1].Channels["ch2"].Items[2].SetOctave)
+	assert.Equal(t,
+		&note.Note{Pitch: note.D, Length: defaultLength},
+		s.Blocks[1].Channels["ch2"].Items[3].Note)
+
+	// check synced block after barrier
+	// @ch1 <- {dec}3
+	assert.Equal(t,
+		&note.Note{Pitch: note.D, Tuplet: 3, Length: defaultLength},
+		s.Blocks[2].Channels["ch1"].Items[0].Note)
+	assert.Equal(t,
+		&note.Note{Pitch: note.E, Tuplet: 3, Length: defaultLength},
+		s.Blocks[2].Channels["ch1"].Items[1].Note)
+	assert.Equal(t,
+		&note.Note{Pitch: note.C, Tuplet: 3, Length: defaultLength},
+		s.Blocks[2].Channels["ch1"].Items[2].Note)
 }
