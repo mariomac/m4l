@@ -14,6 +14,7 @@ const (
 	minLength     = 1
 	maxLength     = 64
 	defaultLength = 4
+	maxVolume     = 15
 )
 
 func (p *Parser) eofErr() error {
@@ -161,6 +162,12 @@ func (p *Parser) tablatureNode(s *song.Song) (song.Tablature, error) {
 			} else {
 				t = append(t, song.TablatureItem{Note: &n})
 			}
+		case Volume:
+			n := tok.getVolume()
+			if n > maxVolume {
+				return t, ParserError{t: tok, msg: fmt.Sprintf("max volume is 16 (was: %d)", n)}
+			}
+			t = append(t, song.TablatureItem{Volume: &n})
 		case Silence:
 			n := tok.getSilence()
 			t = append(t, song.TablatureItem{Note: &n})
@@ -202,6 +209,12 @@ func (p *Parser) tupletNode() (song.Tablature, error) {
 			} else {
 				t = append(t, song.TablatureItem{Note: &n})
 			}
+		case Volume:
+			n := tok.getVolume()
+			if n > maxVolume {
+				return t, ParserError{t: tok, msg: fmt.Sprintf("max volume is 16 (was: %d)", n)}
+			}
+			t = append(t, song.TablatureItem{Volume: &n})
 		case Silence:
 			n := tok.getSilence()
 			t = append(t, song.TablatureItem{Note: &n})

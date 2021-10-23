@@ -30,6 +30,7 @@ const (
 	ChannelSync TokenType = "ChannelSync"
 	Comment     TokenType = "Comment"
 	Note        TokenType = "Note"
+	Volume      TokenType = "Volume"
 	Silence     TokenType = "Silence"
 	Octave      TokenType = "Octave"
 	OctaveStep  TokenType = "OctaveStep"
@@ -58,6 +59,7 @@ var tokenDefs = []struct {
 	{t: ChannelSync, r: regexp.MustCompile(`^-{2,}$`)},
 	// Tablature stuff needs to go at the bottom, to not get confusion with other language grammar items
 	{t: Note, r: regexp.MustCompile(`^([a-gA-G])([#+\-]?)(\d*)(\.*)$`)},
+	{t: Volume, r: regexp.MustCompile(`^[Vv](\d*)$`)},
 	{t: Silence, r: regexp.MustCompile(`^[Rr](\d*)$`)},
 	{t: Octave, r: regexp.MustCompile(`^[Oo](\d)$`)},
 	{t: OctaveStep, r: regexp.MustCompile(`^(<|>)$`)},
@@ -248,6 +250,11 @@ func (f *Token) getNote() (note.Note, error) {
 
 func (token *Token) getOctave() int {
 	token.assertType(Octave)
+	return mustAtoi(token.Submatch[0])
+}
+
+func (token *Token) getVolume() int {
+	token.assertType(Volume)
 	return mustAtoi(token.Submatch[0])
 }
 

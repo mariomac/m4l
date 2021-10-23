@@ -48,8 +48,8 @@ $const := abc
 
 @ch1 <- c1.d-2..e+4$const$const
 loop:
-@ch1 <- r4a>
-@ch2 <- aco2 | d
+@ch1 <- v14r4a>
+@ch2 <- v13aco2 | d
 ---
 @ch1 <- {dec}3
 `)))
@@ -97,32 +97,38 @@ loop:
 
 	// check synced block ch1 and ch2 channel statements
 	require.Len(t, s.Blocks[1].Channels, 2)
-	// @ch1 <- r4a>
-	require.Len(t, s.Blocks[1].Channels["ch1"].Items, 3)
+	// @ch1 <- v14r4a>
+	require.Len(t, s.Blocks[1].Channels["ch1"].Items, 4)
+	assert.Equal(t,
+		14,
+		*s.Blocks[1].Channels["ch1"].Items[0].Volume)
 	assert.Equal(t,
 		&note.Note{Pitch: note.Silence, Length: 4},
-		s.Blocks[1].Channels["ch1"].Items[0].Note)
-	assert.Equal(t,
-		&note.Note{Pitch: note.A, Length: defaultLength},
 		s.Blocks[1].Channels["ch1"].Items[1].Note)
 	assert.Equal(t,
+		&note.Note{Pitch: note.A, Length: defaultLength},
+		s.Blocks[1].Channels["ch1"].Items[2].Note)
+	assert.Equal(t,
 		1,
-		*s.Blocks[1].Channels["ch1"].Items[2].OctaveStep)
+		*s.Blocks[1].Channels["ch1"].Items[3].OctaveStep)
 
-	// @ch2 <- aco2 | d
-	require.Len(t, s.Blocks[1].Channels["ch2"].Items, 4)
+	// @ch2 <- v13aco2 | d
+	require.Len(t, s.Blocks[1].Channels["ch2"].Items, 5)
+	assert.Equal(t,
+		13,
+		*s.Blocks[1].Channels["ch2"].Items[0].Volume)
 	assert.Equal(t,
 		&note.Note{Pitch: note.A, Length: defaultLength},
-		s.Blocks[1].Channels["ch2"].Items[0].Note)
-	assert.Equal(t,
-		&note.Note{Pitch: note.C, Length: defaultLength},
 		s.Blocks[1].Channels["ch2"].Items[1].Note)
 	assert.Equal(t,
+		&note.Note{Pitch: note.C, Length: defaultLength},
+		s.Blocks[1].Channels["ch2"].Items[2].Note)
+	assert.Equal(t,
 		2,
-		*s.Blocks[1].Channels["ch2"].Items[2].SetOctave)
+		*s.Blocks[1].Channels["ch2"].Items[3].SetOctave)
 	assert.Equal(t,
 		&note.Note{Pitch: note.D, Length: defaultLength},
-		s.Blocks[1].Channels["ch2"].Items[3].Note)
+		s.Blocks[1].Channels["ch2"].Items[4].Note)
 
 	// check synced block after barrier
 	// @ch1 <- {dec}3

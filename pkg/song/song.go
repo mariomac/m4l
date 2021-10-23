@@ -49,6 +49,7 @@ type TablatureItem struct {
 	Note        *note.Note
 	SetOctave   *int
 	OctaveStep  *int // negative: decrements
+	Volume   *int // 0 to 15
 }
 
 type Channel struct {
