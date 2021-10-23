@@ -95,8 +95,8 @@ func (p *Parser) loopNode(s *song.Song) error {
 	if s.LoopIndex >= 0 {
 		return ParserError{t: p.t.Get(), msg: "duplicate 'loop:' tag"}
 	}
-	s.AddSyncedBlock()
 	s.LoopIndex = len(s.Blocks)
+	s.AddSyncedBlock()
 	p.t.Next()
 	return nil
 }

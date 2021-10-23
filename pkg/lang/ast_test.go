@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mariomac/msxmml/pkg/song/note"
+
 	"github.com/mariomac/msxmml/pkg/song"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -12,7 +14,6 @@ import (
 
 // TODO TEST that a non-closed tuplet returns error
 // TODO TEST that closing a non-open tuplet returns error
-
 
 func TestInstrument(t *testing.T) {
 	s, err := Parse(NewTokenizer(strings.NewReader(`
@@ -54,5 +55,44 @@ loop:
 `)))
 	require.NoError(t, err)
 	require.NotNil(t, s)
+	// check overall tablature structure
+	require.Len(t, s.Constants, 2)
+	require.Len(t, s.Blocks, 3)
+	// check $voice constant definition
+	require.Len(t, s.Constants["voice"], 1)
+	assert.Equal(t,
+		&song.Instrument{Wave: "sine", Envelope: []song.TimePoint{
+			{Time: 30 * time.Millisecond, Val: 1},
+			{Time: 100 * time.Millisecond, Val: 0.6},
+			{Time: 200 * time.Millisecond, Val: 0.6},
+			{Time: 210 * time.Millisecond, Val: 0},
+		}},
+		s.Constants["voice"][0].Instrument)
+	// check $const constant definition
+	require.Len(t, s.Constants["const"], 3)
+	for n, exp := range []note.Pitch{note.A, note.B, note.C} {
+		assert.Equal(t,
+			&note.Note{Pitch: exp, Length: defaultLength},
+			s.Constants["const"][n].Note)
+	}
+	// check @ch1 <- c1.d-2..e+4$const$const
+	require.Len(t, s.Blocks[0].Channels, 1)
+	require.Contains(t, s.Blocks[0].Channels, "ch1")
+	require.Len(t, s.Blocks[0].Channels["ch1"].Items, 5)
+	assert.Equal(t,
+		&note.Note{Pitch: note.C, Length: 1, Dots: 1},
+		s.Blocks[0].Channels["ch1"].Items[0].Note)
+	assert.Equal(t,
+		&note.Note{Pitch: note.D, Length: 2, Dots: 2, Halftone: note.Flat},
+		s.Blocks[0].Channels["ch1"].Items[1].Note)
+	assert.Equal(t,
+		&note.Note{Pitch: note.E, Length: 4, Halftone: note.Sharp},
+		s.Blocks[0].Channels["ch1"].Items[2].Note)
+	cref := "const"
+	assert.Equal(t, &cref, s.Blocks[0].Channels["ch1"].Items[3].ConstantRef)
+	assert.Equal(t, &cref, s.Blocks[0].Channels["ch1"].Items[4].ConstantRef)
+
+	//	check loop label
+	assert.Equal(t, 1, s.LoopIndex)
 
 }
