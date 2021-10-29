@@ -7,50 +7,48 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 
-	"github.com/mariomac/msxmml/pkg/song"
 	"github.com/mariomac/msxmml/pkg/song/note"
 )
 
 type TokenType string
 
 const (
-	AnyString   TokenType = "AnyString"
-	LoopTag     TokenType = "LoopTag"
-	ConstDef    TokenType = "ConstDef"
-	ConstRef    TokenType = "ConstRef"
-	Assign      TokenType = "Assign"
-	OpenKey     TokenType = "OpenKey"
-	CloseKey    TokenType = "CloseKey"
-	CloseTuple  TokenType = "CloseTuple"
-	MapEntry    TokenType = "MapEntry"
-	AdsrVector  TokenType = "AdsrVector"
-	Separator   TokenType = "Separator"
-	ChannelSync TokenType = "ChannelSync"
-	Comment     TokenType = "Comment"
-	Note        TokenType = "Note"
-	Volume      TokenType = "Volume"
-	Silence     TokenType = "Silence"
-	Octave      TokenType = "Octave"
-	OctaveStep  TokenType = "OctaveStep"
-	Number      TokenType = "Number"
-	ChannelId   TokenType = "ChannelId"
-	SendArrow   TokenType = "SendArrow"
+	AnyString       TokenType = "AnyString"
+	LoopTag         TokenType = "LoopTag"
+	ConstDef        TokenType = "ConstDef"
+	ConstRef        TokenType = "ConstRef"
+	Assign          TokenType = "Assign"
+	OpenInstrument  TokenType = "OpenInstrument"
+	OpenTuple       TokenType = "OpenTuple"
+	CloseInstrument TokenType = "CloseInstrument"
+	CloseTuple      TokenType = "CloseTuple"
+	MapEntry        TokenType = "MapEntry"
+	Separator       TokenType = "Separator"
+	ChannelSync     TokenType = "ChannelSync"
+	Comment         TokenType = "Comment"
+	Note            TokenType = "Note"
+	Volume          TokenType = "Volume"
+	Silence         TokenType = "Silence"
+	Octave          TokenType = "Octave"
+	OctaveStep      TokenType = "OctaveStep"
+	Number          TokenType = "Number"
+	ChannelId       TokenType = "ChannelId"
+	SendArrow       TokenType = "SendArrow"
 )
 
 var tokenDefs = []struct {
 	t TokenType
 	r *regexp.Regexp
 }{
-	{t: Comment, r: regexp.MustCompile(`^#\.*$`)},
+	{t: Comment, r: regexp.MustCompile(`^;\.*$`)},
+	{t: OpenInstrument, r: regexp.MustCompile(`^(\w+)\s*\{$`)},
 	{t: SendArrow, r: regexp.MustCompile(`^<-$`)},
 	{t: LoopTag, r: regexp.MustCompile(`^[Ll][Oo][Oo][Pp]\s*:$`)},
-	{t: OpenKey, r: regexp.MustCompile(`^\{$`)},
-	{t: CloseTuple, r: regexp.MustCompile(`^}(\d)+$`)},
-	{t: CloseKey, r: regexp.MustCompile(`^}$`)},
-	{t: AdsrVector, r: regexp.MustCompile(`^[Aa][Dd][Ss][Rr]\s*:\s*(\d+)\s*->\s*(\d+)\s*,\s*(\d+)\s*\->\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)$`)},
-	{t: MapEntry, r: regexp.MustCompile(`^(\w+)\s*:\s*(\w+)$`)},
+	{t: OpenTuple, r: regexp.MustCompile(`^\($`)},
+	{t: CloseTuple, r: regexp.MustCompile(`^\)(\d)+$`)},
+	{t: CloseInstrument, r: regexp.MustCompile(`^}$`)},
+	{t: MapEntry, r: regexp.MustCompile(`^(\w+)\s*:\s*([^}#\n]+)$`)},
 	{t: Separator, r: regexp.MustCompile(`^\|+$`)},
 	{t: ConstDef, r: regexp.MustCompile(`^\$(\w+)\s*:=$`)},
 	{t: ConstRef, r: regexp.MustCompile(`^\$(\w+)$`)},
@@ -91,6 +89,7 @@ func NewTokenizer(input io.Reader) *Tokenizer {
 	}
 }
 
+// todo: ignore comments
 func (t *Tokenizer) Next() bool {
 	t.col += len(t.lastMatch)
 	for !t.EOF() {
@@ -269,27 +268,14 @@ func (token *Token) getSilence() note.Note {
 	return n
 }
 
-func (tok *Token) getAdsr() []song.TimePoint {
-	tok.assertType(AdsrVector)
-	attackLevel := float64(mustAtoi(tok.Submatch[1])) / 100.0
-	decayLevel := float64(mustAtoi(tok.Submatch[3])) / 100.0
-	return []song.TimePoint{
-		{Time: time.Duration(mustAtoi(tok.Submatch[0])) * time.Millisecond, Val: attackLevel},
-		{Time: time.Duration(mustAtoi(tok.Submatch[2])) * time.Millisecond, Val: decayLevel},
-		{Time: time.Duration(mustAtoi(tok.Submatch[4])) * time.Millisecond, Val: decayLevel},
-		{Time: time.Duration(mustAtoi(tok.Submatch[5])) * time.Millisecond, Val: 0},
-	}
-}
-
-func (tok *Token) getMapKey() string {
-	tok.assertType(MapEntry)
+func (tok *Token) getInstrumentClass() string {
+	tok.assertType(OpenInstrument)
 	return tok.Submatch[0]
 }
 
-func (tok *Token) getWave() string {
+func (tok *Token) getMapKeyValue() (string, string) {
 	tok.assertType(MapEntry)
-	// TODO: validate wave values?
-	return tok.Submatch[1]
+	return tok.Submatch[0], tok.Submatch[1]
 }
 
 func (t *Token) getChannelId() string {

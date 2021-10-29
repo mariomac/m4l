@@ -15,7 +15,7 @@ func TestTokenizer_TwoChannels(t *testing.T) {
       abcde.e8fga16
 
 @troloro<-abcdedgo1<a
-    ab{cde}3e-3.. | abc
+    ab(cde)3e-3.. | abc
 `
 	tok := NewTokenizer(bytes.NewReader([]byte(mml)))
 	next := func() Token {
@@ -63,11 +63,11 @@ func TestTokenizer_TwoChannels(t *testing.T) {
 	assert.Equal(t, n("a", 5, 21), next())
 	assert.Equal(t, n("a", 6, 5), next())
 	assert.Equal(t, n("b", 6, 6), next())
-	assert.Equal(t, Token{Type: OpenKey, Submatch: []string{}, Content: `{`, Row: 6, Col: 7}, next())
+	assert.Equal(t, Token{Type: OpenTuple, Submatch: []string{}, Content: `(`, Row: 6, Col: 7}, next())
 	assert.Equal(t, n("c", 6, 8), next())
 	assert.Equal(t, n("d", 6, 9), next())
 	assert.Equal(t, n("e", 6, 10), next())
-	assert.Equal(t, Token{Type: CloseTuple, Submatch: []string{"3"}, Content: `}3`, Row: 6, Col: 11}, next())
+	assert.Equal(t, Token{Type: CloseTuple, Submatch: []string{"3"}, Content: `)3`, Row: 6, Col: 11}, next())
 	assert.Equal(t, Token{Type: Note, Content: "e-3..", Submatch: []string{"e", "-", "3", ".."}, Row: 6, Col: 13}, next())
 	assert.Equal(t, Token{Type: Separator, Submatch: []string{}, Content: `|`, Row: 6, Col: 19}, next())
 	assert.Equal(t, n("a", 6, 21), next())
@@ -80,9 +80,9 @@ func TestTokenizer_TwoChannels(t *testing.T) {
 
 func TestTokenizer_ConstantDefinitions(t *testing.T) {
 	mml := `
-$voice := {
-    wave: sine
-    adsr: 50->100, 100-> 70,200, 10
+$voice := psg {
+    foo: bar
+    baz: bae
 }
 $intro := ab-4..
 
@@ -99,11 +99,10 @@ loop:
 		return tok.Get()
 	}
 	assert.Equal(t, Token{Type: ConstDef, Submatch: []string{"voice"}, Content: "$voice :=", Row: 2, Col: 1}, next())
-	assert.Equal(t, Token{Type: OpenKey, Content: "{", Submatch: []string{}, Row: 2, Col: 11}, next())
-	assert.Equal(t, Token{Type: MapEntry, Content: "wave: sine", Submatch: []string{"wave", "sine"}, Row: 3, Col: 5}, next())
-	assert.Equal(t, Token{Type: AdsrVector, Content: "adsr: 50->100, 100-> 70,200, 10",
-		Submatch: []string{"50", "100", "100", "70", "200", "10"}, Row: 4, Col: 5}, next())
-	assert.Equal(t, Token{Type: CloseKey, Content: "}", Submatch: []string{}, Row: 5, Col: 1}, next())
+	assert.Equal(t, Token{Type: OpenInstrument, Content: "psg {", Submatch: []string{"psg"}, Row: 2, Col: 11}, next())
+	assert.Equal(t, Token{Type: MapEntry, Content: "foo: bar", Submatch: []string{"foo", "bar"}, Row: 3, Col: 5}, next())
+	assert.Equal(t, Token{Type: MapEntry, Content: "baz: bae", Submatch: []string{"baz", "bae"}, Row: 4, Col: 5}, next())
+	assert.Equal(t, Token{Type: CloseInstrument, Content: "}", Submatch: []string{}, Row: 5, Col: 1}, next())
 	assert.Equal(t, Token{Type: ConstDef, Content: "$intro :=", Submatch: []string{"intro"}, Row: 6, Col: 1}, next())
 	assert.Equal(t, Token{Type: Note, Content: "a", Submatch: []string{"a", "", "", ""}, Row: 6, Col: 11}, next())
 	assert.Equal(t, Token{Type: Note, Content: "b-4..", Submatch: []string{"b", "-", "4", ".."}, Row: 6, Col: 12}, next())

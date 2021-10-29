@@ -3,7 +3,6 @@ package lang
 import (
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/mariomac/msxmml/pkg/song/note"
 
@@ -17,9 +16,9 @@ import (
 
 func TestInstrument(t *testing.T) {
 	s, err := Parse(NewTokenizer(strings.NewReader(`
-$voice := {
+$voice := trumpet {
 	wave: sine
-	adsr: 30->100, 100->60, 200, 210
+	sordine: true
 }
 `)))
 	require.NoError(t, err)
@@ -28,21 +27,19 @@ $voice := {
 	voice := s.Constants["voice"][0]
 	require.NotNil(t, voice.Instrument)
 	assert.Equal(t, song.Instrument{
-		Wave: "sine",
-		Envelope: []song.TimePoint{
-			{1, 30 * time.Millisecond},
-			{0.6, 100 * time.Millisecond},
-			{0.6, 200 * time.Millisecond},
-			{0, 210 * time.Millisecond},
+		Class: "trumpet",
+		Properties: map[string]string{
+			"wave":    "sine",
+			"sordine": "true",
 		},
 	}, *voice.Instrument)
 }
 
 func TestCompleteProgram(t *testing.T) {
 	s, err := Parse(NewTokenizer(strings.NewReader(`
-$voice := {
+$voice := triki {
 	wave: sine
-	adsr: 30->100, 100->60, 200, 210
+	adsr: traka
 }
 $const := abc
 
@@ -51,7 +48,7 @@ loop:
 @ch1 <- v14r4a>
 @ch2 <- v13aco2 | d
 ---
-@ch1 <- {dec}3
+@ch1 <- (dec)3
 `)))
 	require.NoError(t, err)
 	require.NotNil(t, s)
@@ -61,12 +58,13 @@ loop:
 	// check $voice constant definition
 	require.Len(t, s.Constants["voice"], 1)
 	assert.Equal(t,
-		&song.Instrument{Wave: "sine", Envelope: []song.TimePoint{
-			{Time: 30 * time.Millisecond, Val: 1},
-			{Time: 100 * time.Millisecond, Val: 0.6},
-			{Time: 200 * time.Millisecond, Val: 0.6},
-			{Time: 210 * time.Millisecond, Val: 0},
-		}},
+		&song.Instrument{
+			Class: "triki",
+			Properties: map[string]string{
+				"wave": "sine",
+				"adsr": "traka",
+			},
+		},
 		s.Constants["voice"][0].Instrument)
 	// check $const constant definition
 	require.Len(t, s.Constants["const"], 3)

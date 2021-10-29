@@ -4,12 +4,14 @@
 # comments start with sharp #
 # constants are defined with a let. They can be instruments or tablature pieces
 # variables start with $ and assigning an instrument or tablature uses the `:=`symbol
-$instrument1 := {
-    wave: sine
+$instrument1 := psg {
+    pattern: 2
 }
-$instrument2 := {
-    wave: square
-    adsr: 5->100, 20->60, 25, 30
+$instrument2 := psg {
+    frequency: 123
+    noise: 12
+    cycle: 23
+    pattern: 4
 }
 $piece := o4 e8e8 r8 c8 e
 
@@ -37,11 +39,11 @@ program := constantDef* statement* ('loop:' statement*)?
 
 constantDef := ID ':=' (instrumentDef | tablature)
 
-instrumentDef := '{' mapEntry* ('adsr:' adsrVector)? mapEntry* '}'
+instrumentDef := CLASS '{' mapEntry* '}'
 
 tablature := (ID | NOTE | SILENCE | OCTAVE | INCOCT | DECOCT | tuplet | '|')+
 
-tuplet := '{' (NOTE|OCTAVE|INCOCT|DECOCT) + '}' NUM
+tuplet := '(' (NOTE|OCTAVE|INCOCT|DECOCT) + ')' NUM
 
 ID := $(\w)+
 

@@ -2,7 +2,6 @@ package lang
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/mariomac/msxmml/pkg/song"
 )
@@ -75,8 +74,8 @@ func (p *Parser) constantDefNode(s *song.Song) error {
 	}
 	tok = p.t.Get()
 	switch tok.Type {
-	case OpenKey:
-		inst, err := p.instrumentDefinitionNode()
+	case OpenInstrument:
+		inst, err := p.instrumentDefinitionNode(tok.getInstrumentClass())
 		if err != nil {
 			return err
 		}
@@ -102,37 +101,22 @@ func (p *Parser) loopNode(s *song.Song) error {
 	return nil
 }
 
-// instrumentDef := '{' mapEntry* ('adsr:' adsrVector)? mapEntry* '}'
-func (p *Parser) instrumentDefinitionNode() (song.Instrument, error) {
-	inst := song.Instrument{}
+// instrumentDef := class '{' mapEntry* ('adsr:' adsrVector)? mapEntry* '}'
+func (p *Parser) instrumentDefinitionNode(class string) (song.Instrument, error) {
+	inst := song.Instrument{
+		Class:      class,
+		Properties: map[string]string{},
+	}
 	if !p.t.Next() {
 		return inst, p.eofErr()
 	}
-	definedAdsr, definedWave := false, false
 	for !p.t.EOF() {
 		tok := p.t.Get()
 		switch tok.Type {
-		case AdsrVector:
-			if definedAdsr {
-				return inst, ParserError{tok, "defining ADSR envelope twice"}
-			}
-			definedAdsr = true
-			inst.Envelope = tok.getAdsr()
 		case MapEntry:
-			switch strings.ToLower(tok.getMapKey()) {
-			case "adsr":
-				return inst, ParserError{tok, "adsr should have a value like: 20->100, 50->80, 100, 120"}
-			case "wave":
-				if definedWave {
-					return inst, ParserError{tok, "wave is defined twice"}
-				}
-				definedWave = true
-				// todo: maybe validate wave values?
-				inst.Wave = tok.getWave()
-			default:
-				return inst, ParserError{tok, "only 'adsr' and 'wave' properties are allowed"}
-			}
-		case CloseKey:
+			k, v := tok.getMapKeyValue()
+			inst.Properties[k] = v
+		case CloseInstrument:
 			p.t.Next()
 			return inst, nil
 		default:
@@ -177,7 +161,7 @@ func (p *Parser) tablatureNode(s *song.Song) (song.Tablature, error) {
 		case OctaveStep:
 			o := tok.getOctaveStep()
 			t = append(t, song.TablatureItem{OctaveStep: &o})
-		case OpenKey:
+		case OpenTuple:
 			if tu, err := p.tupletNode(); err != nil {
 				return nil, err
 			} else {
@@ -194,7 +178,7 @@ func (p *Parser) tablatureNode(s *song.Song) (song.Tablature, error) {
 	return t, nil
 }
 
-// tuplet := '{' (NOTE|OCTAVE|INCOCT|DECOCT) + '}' NUM
+// tuplet := '(' (NOTE|OCTAVE|INCOCT|DECOCT) + ')' NUM
 func (p *Parser) tupletNode() (song.Tablature, error) {
 	if !p.t.Next() {
 		return nil, p.eofErr()
@@ -238,7 +222,10 @@ func (p *Parser) tupletNode() (song.Tablature, error) {
 		case AnyString:
 			return nil, SyntaxError{tok}
 		default:
-			return nil, p.eofErr()
+			if p.t.EOF() {
+				return nil, p.eofErr()
+			}
+			return nil, SyntaxError{tok}
 		}
 		p.t.Next()
 	}
