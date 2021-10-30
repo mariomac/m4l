@@ -2,6 +2,7 @@ package lang
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/mariomac/msxmml/pkg/song"
 )
@@ -26,26 +27,26 @@ type Parser struct {
 
 // Convention: tokenizer always receives a tokenizer with a token available, excepting the Root
 // program := constantDef* statement* ('loop:' statement*)?
-func Parse(t *Tokenizer) (*song.Song, error) {
+func Parse(reader io.ReadSeeker) (*song.Song, error) {
+	props, lines, err := parseHeader(reader)
+	if err != nil {
+		return nil, err
+	}
+
+	t := NewTokenizer(reader, lines)
 	p := &Parser{
 		t: t,
 	}
 	s := &song.Song{
-		Properties: map[string]string{},
+		Properties: props,
 		Constants:  map[string]song.Tablature{},
 		LoopIndex:  -1,
 	}
-
-
 
 	if err := parseBody(s, p); err != nil {
 		return nil, err
 	}
 	return s, nil
-}
-
-func parseHeader() (map[string]string, error) {
-	return nil, nil
 }
 
 func parseBody(s *song.Song, p *Parser) error {

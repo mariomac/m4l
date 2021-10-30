@@ -36,14 +36,9 @@ const (
 	Octave
 	OctaveStep
 	Number
+	// NoMatch must be the last token
 	NoMatch
-
-	// tokens from here are not considered as part of "all the tokens", since they are added after a refactoring
-	// that should force the tokenizer.Get method to specify the expected tokens
-	HeaderProperty
 )
-
-const tokensLength = int(NoMatch)
 
 func (t TokenType) String() string {
 	switch t {
@@ -89,14 +84,11 @@ func (t TokenType) String() string {
 		return "ChannelId"
 	case SendArrow:
 		return "SendArrow"
-	case HeaderProperty:
-		return "HeaderProperty"
 	}
 	return fmt.Sprintf("unknown: %d (probably a bug)", t)
 }
 
 var tokenDefs = map[TokenType]*regexp.Regexp{
-	HeaderProperty:  regexp.MustCompile(`^([\w\.]+)\s+([\w\.]+)$`),
 	Comment:         regexp.MustCompile(`^;\.*$`),
 	OpenInstrument:  regexp.MustCompile(`^(\w+)\s*\{$`),
 	SendArrow:       regexp.MustCompile(`^<-$`),
@@ -129,17 +121,18 @@ type Tokenizer struct {
 	tokens    *regexp.Regexp
 }
 
-func NewTokenizer(input io.Reader) *Tokenizer {
+func NewTokenizer(input io.Reader, startRow int) *Tokenizer {
 	return &Tokenizer{
 		input:  bufio.NewReader(input),
-		tokens: compose(),
+		tokens: mergeAllTokens(),
+		row: startRow,
 	}
 }
 
-// if len(tokens) == 0, it merges all the tokens in order of numeric value
-func compose(tokens ...TokenType) *regexp.Regexp {
-	if len(tokens) == 0 {
-		tokens = allTokens()
+func mergeAllTokens() *regexp.Regexp {
+	tokens := make([]TokenType, NoMatch)
+	for i := 0; i < len(tokens); i++ {
+		tokens[i] = TokenType(i)
 	}
 	sb := strings.Builder{}
 	sb.WriteString("(")
@@ -152,14 +145,6 @@ func compose(tokens ...TokenType) *regexp.Regexp {
 	return regexp.MustCompile(sb.String())
 }
 
-// an ordered slice containing all the tokens in order of precedence, excluding "anyString"
-func allTokens() []TokenType {
-	tokens := make([]TokenType, tokensLength)
-	for i := 0; i < tokensLength; i++ {
-		tokens[i] = TokenType(i)
-	}
-	return tokens
-}
 
 // todo: ignore comments
 func (t *Tokenizer) Next() bool {
@@ -204,8 +189,8 @@ func (t *Tokenizer) EOF() bool {
 }
 
 // Get a token from a token type, if len(tokens) == 0, it searches across all the tokens
-func (t *Tokenizer) Get(tokens ...TokenType) Token {
-	return t.parseToken(t.lastMatch, tokens...)
+func (t *Tokenizer) Get() Token {
+	return t.parseToken(t.lastMatch)
 }
 
 type Token struct {
@@ -218,11 +203,8 @@ type Token struct {
 }
 
 // if len(tokens) == 0, it searches across all the tokens
-func (t *Tokenizer) parseToken(token string, tokens ...TokenType) Token {
-	if len(tokens) == 0 {
-		tokens = allTokens()
-	}
-	for _, tt := range allTokens() {
+func (t *Tokenizer) parseToken(token string) Token {
+	for tt := TokenType(0) ; tt < NoMatch ; tt++ {
 		td := tokenDefs[tt]
 		submatches := td.FindStringSubmatch(token)
 		if submatches != nil {

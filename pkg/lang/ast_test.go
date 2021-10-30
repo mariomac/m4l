@@ -15,12 +15,12 @@ import (
 // TODO TEST that closing a non-open tuplet returns error
 
 func TestInstrument(t *testing.T) {
-	s, err := Parse(NewTokenizer(strings.NewReader(`
+	s, err := Parse(strings.NewReader(`
 $voice := trumpet {
 	wave: sine
 	sordine: true
 }
-`)))
+`))
 	require.NoError(t, err)
 	require.Contains(t, s.Constants, "voice")
 	require.Len(t, s.Constants["voice"], 1)
@@ -36,7 +36,7 @@ $voice := trumpet {
 }
 
 func TestCompleteProgram(t *testing.T) {
-	s, err := Parse(NewTokenizer(strings.NewReader(`
+	s, err := Parse(strings.NewReader(`
 $voice := triki {
 	wave: sine
 	adsr: traka
@@ -49,7 +49,7 @@ loop:
 @ch2 <- v13aco2 | d
 ---
 @ch1 <- (dec)3
-`)))
+`))
 	require.NoError(t, err)
 	require.NotNil(t, s)
 	// check overall tablature structure

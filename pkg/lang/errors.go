@@ -3,7 +3,7 @@ package lang
 import "fmt"
 
 func errHeader(t Token) string {
-	return fmt.Sprintf("%d:%d - Unexpected EOF", t.Row, t.Col)
+	return fmt.Sprintf("%d:%d - ", t.Row, t.Col)
 }
 
 type SyntaxError struct {
@@ -11,7 +11,7 @@ type SyntaxError struct {
 }
 
 func (p SyntaxError) Error() string {
-	return errHeader(p.t) + fmt.Sprintf("Unexpected %q", p.t.Content)
+	return errHeader(p.t) + fmt.Sprintf("Syntax Error: unexpected %q", p.t.Content)
 }
 
 type UnexpecedEofError struct {

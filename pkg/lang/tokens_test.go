@@ -17,7 +17,7 @@ func TestTokenizer_TwoChannels(t *testing.T) {
 @troloro<-abcdedgo1<a
     ab(cde)3e-3.. | abc
 `
-	tok := NewTokenizer(bytes.NewReader([]byte(mml)))
+	tok := NewTokenizer(bytes.NewReader([]byte(mml)), 0)
 	next := func() Token {
 		require.True(t, tok.Next())
 		return tok.Get()
@@ -92,7 +92,7 @@ loop:
 ---
 @ch1 <- d e 
 `
-	tok := NewTokenizer(bytes.NewReader([]byte(mml)))
+	tok := NewTokenizer(bytes.NewReader([]byte(mml)), 0)
 
 	next := func() Token {
 		require.True(t, tok.Next())

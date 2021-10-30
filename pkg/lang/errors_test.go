@@ -9,11 +9,11 @@ import (
 )
 
 func TestRedefinitionError(t *testing.T) {
-	_, err := Parse(NewTokenizer(strings.NewReader(`
+	_, err := Parse(strings.NewReader(`
 $foo := pgs { wave: square }
 $bar := abce
 $foo := ffe
-`)))
+`))
 	require.IsTypef(t, RedefinitionError{}, err, "%#v", err)
 	terr := err.(RedefinitionError)
 	assert.Equal(t, 4, terr.t.Row)
@@ -21,9 +21,9 @@ $foo := ffe
 }
 
 func TestSyntaxError(t *testing.T) {
-	_, err := Parse(NewTokenizer(strings.NewReader(`
+	_, err := Parse(strings.NewReader(`
 $foo := ( wave: square )
-`)))
+`))
 	require.IsTypef(t, SyntaxError{}, err, "%#v", err)
 	terr := err.(SyntaxError)
 	assert.Equal(t, 2, terr.t.Row)
