@@ -31,35 +31,49 @@ func Parse(t *Tokenizer) (*song.Song, error) {
 		t: t,
 	}
 	s := &song.Song{
-		Constants: map[string]song.Tablature{},
-		LoopIndex: -1,
+		Properties: map[string]string{},
+		Constants:  map[string]song.Tablature{},
+		LoopIndex:  -1,
 	}
-	s.AddSyncedBlock()
 
+
+
+	if err := parseBody(s, p); err != nil {
+		return nil, err
+	}
+	return s, nil
+}
+
+func parseHeader() (map[string]string, error) {
+	return nil, nil
+}
+
+func parseBody(s *song.Song, p *Parser) error {
+	s.AddSyncedBlock()
 	p.t.Next()
 	for !p.t.EOF() {
 		token := p.t.Get()
 		switch token.Type {
 		case ConstDef:
 			if err := p.constantDefNode(s); err != nil {
-				return nil, err
+				return err
 			}
 		case LoopTag:
 			if err := p.loopNode(s); err != nil {
-				return nil, err
+				return err
 			}
 		case ChannelSync:
 			s.AddSyncedBlock()
 			p.t.Next()
 		case ChannelId:
 			if err := p.channelFillNode(s); err != nil {
-				return nil, err
+				return err
 			}
 		default:
-			return nil, SyntaxError{t: token}
+			return SyntaxError{t: token}
 		}
 	}
-	return s, nil
+	return nil
 }
 
 // constantDef := ID ':=' (instrumentDef | tablature+)
@@ -219,7 +233,7 @@ func (p *Parser) tupletNode() (song.Tablature, error) {
 			return t, nil
 		case Separator:
 		// just ignore
-		case AnyString:
+		case NoMatch:
 			return nil, SyntaxError{tok}
 		default:
 			if p.t.EOF() {

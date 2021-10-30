@@ -10,8 +10,9 @@ const defaultOctave = 4
 
 // TODO: test all
 type Song struct {
-	Constants map[string]Tablature
-	Blocks    []SyncedBlock
+	Properties map[string]string
+	Constants  map[string]Tablature
+	Blocks     []SyncedBlock
 	// the index of the Synced block where the loop starts
 	// negative number if no loop
 	LoopIndex int
@@ -49,7 +50,7 @@ type TablatureItem struct {
 	Note        *note.Note
 	SetOctave   *int
 	OctaveStep  *int // negative: decrements
-	Volume   *int // 0 to 15
+	Volume      *int // 0 to 15
 }
 
 type Channel struct {
@@ -63,7 +64,7 @@ type SyncedBlock struct {
 }
 
 type Instrument struct {
-	Class string
+	Class      string
 	Properties map[string]string
 }
 

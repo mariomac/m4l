@@ -11,57 +11,113 @@ import (
 	"github.com/mariomac/msxmml/pkg/song/note"
 )
 
-type TokenType string
+type TokenType int
 
+// ordered by order of precedence in the tokenization process (in case of multiple tokens match a string)
 const (
-	AnyString       TokenType = "AnyString"
-	LoopTag         TokenType = "LoopTag"
-	ConstDef        TokenType = "ConstDef"
-	ConstRef        TokenType = "ConstRef"
-	Assign          TokenType = "Assign"
-	OpenInstrument  TokenType = "OpenInstrument"
-	OpenTuple       TokenType = "OpenTuple"
-	CloseInstrument TokenType = "CloseInstrument"
-	CloseTuple      TokenType = "CloseTuple"
-	MapEntry        TokenType = "MapEntry"
-	Separator       TokenType = "Separator"
-	ChannelSync     TokenType = "ChannelSync"
-	Comment         TokenType = "Comment"
-	Note            TokenType = "Note"
-	Volume          TokenType = "Volume"
-	Silence         TokenType = "Silence"
-	Octave          TokenType = "Octave"
-	OctaveStep      TokenType = "OctaveStep"
-	Number          TokenType = "Number"
-	ChannelId       TokenType = "ChannelId"
-	SendArrow       TokenType = "SendArrow"
+	Comment TokenType = iota
+	OpenInstrument
+	SendArrow
+	LoopTag
+	OpenTuple
+	CloseTuple
+	CloseInstrument
+	MapEntry
+	Separator
+	ConstDef
+	ConstRef
+	Assign
+	ChannelId
+	ChannelSync
+	// Tablature stuff needs to go at the bottom, to not get confusion with other language grammar items
+	Note
+	Volume
+	Silence
+	Octave
+	OctaveStep
+	Number
+	NoMatch
+
+	// tokens from here are not considered as part of "all the tokens", since they are added after a refactoring
+	// that should force the tokenizer.Get method to specify the expected tokens
+	HeaderProperty
 )
 
-var tokenDefs = []struct {
-	t TokenType
-	r *regexp.Regexp
-}{
-	{t: Comment, r: regexp.MustCompile(`^;\.*$`)},
-	{t: OpenInstrument, r: regexp.MustCompile(`^(\w+)\s*\{$`)},
-	{t: SendArrow, r: regexp.MustCompile(`^<-$`)},
-	{t: LoopTag, r: regexp.MustCompile(`^[Ll][Oo][Oo][Pp]\s*:$`)},
-	{t: OpenTuple, r: regexp.MustCompile(`^\($`)},
-	{t: CloseTuple, r: regexp.MustCompile(`^\)(\d)+$`)},
-	{t: CloseInstrument, r: regexp.MustCompile(`^}$`)},
-	{t: MapEntry, r: regexp.MustCompile(`^(\w+)\s*:\s*([^}#\n]+)$`)},
-	{t: Separator, r: regexp.MustCompile(`^\|+$`)},
-	{t: ConstDef, r: regexp.MustCompile(`^\$(\w+)\s*:=$`)},
-	{t: ConstRef, r: regexp.MustCompile(`^\$(\w+)$`)},
-	{t: Assign, r: regexp.MustCompile(`^:=$`)},
-	{t: ChannelId, r: regexp.MustCompile(`^@(\w+)$`)},
-	{t: ChannelSync, r: regexp.MustCompile(`^-{2,}$`)},
+const tokensLength = int(NoMatch)
+
+func (t TokenType) String() string {
+	switch t {
+	case NoMatch:
+		return "NoMatch"
+	case LoopTag:
+		return "LoopTag"
+	case ConstDef:
+		return "ConstDef"
+	case ConstRef:
+		return "ConstRef"
+	case Assign:
+		return "Assign"
+	case OpenInstrument:
+		return "OpenInstrument"
+	case OpenTuple:
+		return "OpenTuple"
+	case CloseInstrument:
+		return "CloseInstrument"
+	case CloseTuple:
+		return "CloseTuple"
+	case MapEntry:
+		return "MapEntry"
+	case Separator:
+		return "Separator"
+	case ChannelSync:
+		return "ChannelSync"
+	case Comment:
+		return "Comment"
+	case Note:
+		return "Note"
+	case Volume:
+		return "Volume"
+	case Silence:
+		return "Silence"
+	case Octave:
+		return "Octave"
+	case OctaveStep:
+		return "OctaveStep"
+	case Number:
+		return "Number"
+	case ChannelId:
+		return "ChannelId"
+	case SendArrow:
+		return "SendArrow"
+	case HeaderProperty:
+		return "HeaderProperty"
+	}
+	return fmt.Sprintf("unknown: %d (probably a bug)", t)
+}
+
+var tokenDefs = map[TokenType]*regexp.Regexp{
+	HeaderProperty:  regexp.MustCompile(`^([\w\.]+)\s+([\w\.]+)$`),
+	Comment:         regexp.MustCompile(`^;\.*$`),
+	OpenInstrument:  regexp.MustCompile(`^(\w+)\s*\{$`),
+	SendArrow:       regexp.MustCompile(`^<-$`),
+	LoopTag:         regexp.MustCompile(`^[Ll][Oo][Oo][Pp]\s*:$`),
+	OpenTuple:       regexp.MustCompile(`^\($`),
+	CloseTuple:      regexp.MustCompile(`^\)(\d)+$`),
+	CloseInstrument: regexp.MustCompile(`^}$`),
+	MapEntry:        regexp.MustCompile(`^(\w+)\s*:\s*([^}#\n]+)$`),
+	Separator:       regexp.MustCompile(`^\|+$`),
+	ConstDef:        regexp.MustCompile(`^\$(\w+)\s*:=$`),
+	ConstRef:        regexp.MustCompile(`^\$(\w+)$`),
+	Assign:          regexp.MustCompile(`^:=$`),
+	ChannelId:       regexp.MustCompile(`^@(\w+)$`),
+	ChannelSync:     regexp.MustCompile(`^-{2,}$`),
 	// Tablature stuff needs to go at the bottom, to not get confusion with other language grammar items
-	{t: Note, r: regexp.MustCompile(`^([a-gA-G])([#+\-]?)(\d*)(\.*)$`)},
-	{t: Volume, r: regexp.MustCompile(`^[Vv](\d*)$`)},
-	{t: Silence, r: regexp.MustCompile(`^[Rr](\d*)$`)},
-	{t: Octave, r: regexp.MustCompile(`^[Oo](\d)$`)},
-	{t: OctaveStep, r: regexp.MustCompile(`^(<|>)$`)},
-	{t: Number, r: regexp.MustCompile(`^(\d+)$`)},
+	Note:       regexp.MustCompile(`^([a-gA-G])([#+\-]?)(\d*)(\.*)$`),
+	Volume:     regexp.MustCompile(`^[Vv](\d*)$`),
+	Silence:    regexp.MustCompile(`^[Rr](\d*)$`),
+	Octave:     regexp.MustCompile(`^[Oo](\d)$`),
+	OctaveStep: regexp.MustCompile(`^(<|>)$`),
+	Number:     regexp.MustCompile(`^(\d+)$`),
 }
 
 type Tokenizer struct {
@@ -74,19 +130,35 @@ type Tokenizer struct {
 }
 
 func NewTokenizer(input io.Reader) *Tokenizer {
+	return &Tokenizer{
+		input:  bufio.NewReader(input),
+		tokens: compose(),
+	}
+}
+
+// if len(tokens) == 0, it merges all the tokens in order of numeric value
+func compose(tokens ...TokenType) *regexp.Regexp {
+	if len(tokens) == 0 {
+		tokens = allTokens()
+	}
 	sb := strings.Builder{}
 	sb.WriteString("(")
-	for _, r := range tokenDefs {
-		regex := r.r.String()
+	for _, r := range tokens {
+		regex := tokenDefs[r].String()
 		sb.WriteString(regex[:len(regex)-1]) //removing trailing $
 		sb.WriteString(")|(")
 	}
 	sb.WriteString(`^\S+)`) // catching anything else as "unknown token"
+	return regexp.MustCompile(sb.String())
+}
 
-	return &Tokenizer{
-		input:  bufio.NewReader(input),
-		tokens: regexp.MustCompile(sb.String()),
+// an ordered slice containing all the tokens in order of precedence, excluding "anyString"
+func allTokens() []TokenType {
+	tokens := make([]TokenType, tokensLength)
+	for i := 0; i < tokensLength; i++ {
+		tokens[i] = TokenType(i)
 	}
+	return tokens
 }
 
 // todo: ignore comments
@@ -131,8 +203,9 @@ func (t *Tokenizer) EOF() bool {
 	return len(t.lineRest) == 0 && t.input == nil
 }
 
-func (t *Tokenizer) Get() Token {
-	return t.parseToken(t.lastMatch)
+// Get a token from a token type, if len(tokens) == 0, it searches across all the tokens
+func (t *Tokenizer) Get(tokens ...TokenType) Token {
+	return t.parseToken(t.lastMatch, tokens...)
 }
 
 type Token struct {
@@ -144,14 +217,19 @@ type Token struct {
 	Row, Col int
 }
 
-func (t *Tokenizer) parseToken(token string) Token {
-	for _, td := range tokenDefs {
-		submatches := td.r.FindStringSubmatch(token)
+// if len(tokens) == 0, it searches across all the tokens
+func (t *Tokenizer) parseToken(token string, tokens ...TokenType) Token {
+	if len(tokens) == 0 {
+		tokens = allTokens()
+	}
+	for _, tt := range allTokens() {
+		td := tokenDefs[tt]
+		submatches := td.FindStringSubmatch(token)
 		if submatches != nil {
-			return Token{Type: td.t, Content: token, Submatch: submatches[1:], Row: t.row, Col: t.col}
+			return Token{Type: tt, Content: token, Submatch: submatches[1:], Row: t.row, Col: t.col}
 		}
 	}
-	return Token{Type: AnyString, Content: token, Row: t.row, Col: t.col}
+	return Token{Type: NoMatch, Content: token, Row: t.row, Col: t.col}
 }
 
 func (f *Token) assertType(expected TokenType) {

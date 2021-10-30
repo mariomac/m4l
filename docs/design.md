@@ -1,8 +1,17 @@
 # Design document
 ## Syntax
 ```
-# comments start with sharp #
-# constants are defined with a let. They can be instruments or tablature pieces
+; comments start with ;
+; constants are defined with a let. They can be instruments or tablature pieces
+
+; program header must start with a set of "key value" properties
+
+; tempo, specified as the number of beats per second (1 quarter/crotchet == 1 beat)
+tempo 120
+; for retro-machines, the destination refresh rate (50 or 60 Hz) must be specified
+; to properly calculate the tempo
+psg.hz 60
+
 # variables start with $ and assigning an instrument or tablature uses the `:=`symbol
 $instrument1 := psg {
     pattern: 2
@@ -15,18 +24,18 @@ $instrument2 := psg {
 }
 $piece := o4 e8e8 r8 c8 e
 
-# set channels instruments, combine variables and tablature literals. Constants are read with an $
+; set channels instruments, combine variables and tablature literals. Constants are read with an $
 
 @channel1 <- $instrument1 $piece
 @channel2 <- $instrument2 r16 $piece
 
-# sync barrier. Music doesn't continue until all channels have finished (two dash at least) 
+; sync barrier. Music doesn't continue until all channels have finished (two dash at least) 
 
 --
 
-# loop can include channels and sync barriers. It is an infinite loop, so it does not have sense
-# nest loops or put anything after the loop 
-# loop tag also acts as a synced block
+; loop can include channels and sync barriers. It is an infinite loop, so it does not have sense
+; nest loops or put anything after the loop 
+; loop tag also acts as a synced block
 loop:
 
 @channel3 <- a1 b2 c3 c4 c5
