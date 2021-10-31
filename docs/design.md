@@ -1,5 +1,7 @@
 # Design document
+
 ## Syntax
+
 ```
 ; comments start with ;
 ; constants are defined with a let. They can be instruments or tablature pieces
@@ -63,7 +65,28 @@ SYNC := '-'*
 
 ```
 
-## Binary compilation
+## Binary compilation for MSX PSG
+
+### Tablature instruction set
+
+Instructions have variable bit size
+
+* `00000000 hhhhhhhh llllllll` set envelope cycle
+* `000nnnnn` wait N refresh signals (up to 32), n must be != 0
+* `0010hhhh llllllll` Set tone CH A
+* `0011hhhh llllllll` Set tone CH B
+* `0111hhhh llllllll` Set tone CH C
+* `0110nnnn` Envelope wave shape
+* `010nnnnn` Set noise div rate.
+* `10cbaCBA` Enable channels
+  - `cba` noise on channels c,b,a
+  - `CBA` tone on channels c,b,a
+* `1100vvvv` set volume A
+* `1101vvvv` set volume B
+* `1110vvvv` set volume C
+* `11110000` set envelope for A (ignore volume)
+* `11110001` set envelope for B (ignore volume)
+* `11110010` set envelope for C (ignore volume)
 
 ```
 # music start byte
