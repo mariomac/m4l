@@ -67,6 +67,11 @@ SYNC := '-'*
 
 ## Binary compilation for MSX PSG
 
+`
+loop start byte (2 bytes) == end of array if not loop
+tablature instructions (variable-byte encoding)
+`
+
 ### Tablature instruction set
 
 Instructions have variable bit size
@@ -87,12 +92,3 @@ Instructions have variable bit size
 * `11110000` set envelope for A (ignore volume)
 * `11110001` set envelope for B (ignore volume)
 * `11110010` set envelope for C (ignore volume)
-
-```
-# music start byte
-# block for instruments
-# block for 
-# block for music
-    # address of loop
-    # other blocks for music
-```

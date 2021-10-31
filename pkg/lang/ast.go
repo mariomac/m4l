@@ -152,12 +152,12 @@ func (p *Parser) tablatureNode(s *song.Song, allowConstants bool) (song.Tablatur
 			if !allowConstants {
 				return nil, ParserError{t: tok, msg: "can't refer constants inside constants"}
 			}
-			// todo: test that unexisting const id returns an error
 			id := tok.getConstRefId()
-			if _, ok := s.Constants[id]; !ok {
+			if items, ok := s.Constants[id]; !ok {
 				return nil, ParserError{t: tok, msg: fmt.Sprintf("constant %q not defined", id)}
+			} else { // expand constant as notes
+				t = append(t, items...)
 			}
-			t = append(t, song.TablatureItem{ConstantRef: &id})
 		case Note:
 			if n, err := tok.getNote(); err != nil {
 				return nil, err

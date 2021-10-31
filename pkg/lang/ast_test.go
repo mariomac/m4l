@@ -76,7 +76,7 @@ loop:
 	// check @ch1 <- c1.d-2..e+4$const$const
 	require.Len(t, s.Blocks[0].Channels, 1)
 	require.Contains(t, s.Blocks[0].Channels, "ch1")
-	require.Len(t, s.Blocks[0].Channels["ch1"].Items, 5)
+	require.Len(t, s.Blocks[0].Channels["ch1"].Items, 9)
 	assert.Equal(t,
 		&note.Note{Pitch: note.C, Length: 1, Dots: 1},
 		s.Blocks[0].Channels["ch1"].Items[0].Note)
@@ -86,10 +86,25 @@ loop:
 	assert.Equal(t,
 		&note.Note{Pitch: note.E, Length: 4, Halftone: note.Sharp},
 		s.Blocks[0].Channels["ch1"].Items[2].Note)
-	cref := "const"
-	assert.Equal(t, &cref, s.Blocks[0].Channels["ch1"].Items[3].ConstantRef)
-	assert.Equal(t, &cref, s.Blocks[0].Channels["ch1"].Items[4].ConstantRef)
-
+	/// constants unroll
+	assert.Equal(t,
+		&note.Note{Pitch: note.A, Length: 4},
+		s.Blocks[0].Channels["ch1"].Items[3].Note)
+	assert.Equal(t,
+		&note.Note{Pitch: note.B, Length: 4},
+		s.Blocks[0].Channels["ch1"].Items[4].Note)
+	assert.Equal(t,
+		&note.Note{Pitch: note.C, Length: 4},
+		s.Blocks[0].Channels["ch1"].Items[5].Note)
+	assert.Equal(t,
+		&note.Note{Pitch: note.A, Length: 4},
+		s.Blocks[0].Channels["ch1"].Items[6].Note)
+	assert.Equal(t,
+		&note.Note{Pitch: note.B, Length: 4},
+		s.Blocks[0].Channels["ch1"].Items[7].Note)
+	assert.Equal(t,
+		&note.Note{Pitch: note.C, Length: 4},
+		s.Blocks[0].Channels["ch1"].Items[8].Note)
 	//	check loop label
 	assert.Equal(t, 1, s.LoopIndex)
 

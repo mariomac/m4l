@@ -46,7 +46,6 @@ func (s *Song) AddItems(channelName string, items ...TablatureItem) {
 // TablatureItem pseudo-union type: whatever you can find in a tablature
 type TablatureItem struct {
 	Instrument  *Instrument
-	ConstantRef *string
 	Note        *note.Note
 	SetOctave   *int
 	OctaveStep  *int // negative: decrements
