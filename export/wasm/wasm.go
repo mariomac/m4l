@@ -3,7 +3,6 @@ package wasm
 import (
 	"fmt"
 	"github.com/mariomac/msxmml/pkg/song"
-	"github.com/mariomac/msxmml/pkg/song/note"
 	"time"
 
 	"github.com/mariomac/msxmml/export/wasm/webaudio"
@@ -16,26 +15,26 @@ func ExportWasm(s *song.Song) {
 	}
 }
 
-var flatEquivs = map[note.Pitch]note.Pitch{
-	note.A: note.G,
-	note.B: note.A,
-	note.C: note.B,
-	note.D: note.C,
-	note.E: note.D,
-	note.F: note.E,
-	note.G: note.F,
+var flatEquivs = map[song.Pitch]song.Pitch{
+	song.A: song.G,
+	song.B: song.A,
+	song.C: song.B,
+	song.D: song.C,
+	song.E: song.D,
+	song.F: song.E,
+	song.G: song.F,
 }
 
 func exportChannel(ctx *webaudio.AudioContext, c *song.Channel) {
 	ch := NewChannel(ctx, c.Instrument)
 	sixteenths := float64(0) // todo: consider higher?
 	for _, nt := range c.Notes {
-		if nt.Pitch != note.Silence {
+		if nt.Pitch != song.Silence {
 			var pitch string
 			switch nt.Halftone {
-			case note.Sharp:
+			case song.Sharp:
 				pitch = fmt.Sprintf("%c#%d", nt.Pitch, nt.Octave)
-			case note.Flat:
+			case song.Flat:
 				pitch = fmt.Sprintf("%c#%d", flatEquivs[nt.Pitch], nt.Octave)
 			default:
 				pitch = fmt.Sprintf("%c%d", nt.Pitch, nt.Octave)

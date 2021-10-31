@@ -3,7 +3,6 @@ package export
 import (
 	"fmt"
 	"github.com/mariomac/msxmml/pkg/song"
-	"github.com/mariomac/msxmml/pkg/song/note"
 	"io"
 )
 
@@ -33,18 +32,18 @@ func exportChannel(c *song.Channel, out io.Writer) error {
 		return err
 	}
 	for _, nt := range c.Notes {
-		if nt.Pitch != note.Silence {
+		if nt.Pitch != song.Silence {
 			fmt.Fprint(out, "\t\t")
 			if _, err := fmt.Fprintf(out, `%c{"duration":"%dn","note":"%c`,
 				'\t', nt.Length, nt.Pitch); err != nil {
 				return err
 			}
 			switch nt.Halftone {
-			case note.Sharp:
+			case song.Sharp:
 				if _, err := fmt.Fprintf(out, `%c`, '#'); err != nil {
 					return err
 				}
-			case note.Flat:
+			case song.Flat:
 				if _, err := fmt.Fprintf(out, `%c`, 'b'); err != nil {
 					return err
 				}

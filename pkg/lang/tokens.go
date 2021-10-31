@@ -3,12 +3,11 @@ package lang
 import (
 	"bufio"
 	"fmt"
+	"github.com/mariomac/msxmml/pkg/song"
 	"io"
 	"regexp"
 	"strconv"
 	"strings"
-
-	"github.com/mariomac/msxmml/pkg/song/note"
 )
 
 type TokenType int
@@ -125,7 +124,7 @@ func NewTokenizer(input io.Reader, startRow int) *Tokenizer {
 	return &Tokenizer{
 		input:  bufio.NewReader(input),
 		tokens: mergeAllTokens(),
-		row: startRow,
+		row:    startRow,
 	}
 }
 
@@ -144,7 +143,6 @@ func mergeAllTokens() *regexp.Regexp {
 	sb.WriteString(`^\S+)`) // catching anything else as "unknown token"
 	return regexp.MustCompile(sb.String())
 }
-
 
 // todo: ignore comments
 func (t *Tokenizer) Next() bool {
@@ -204,7 +202,7 @@ type Token struct {
 
 // if len(tokens) == 0, it searches across all the tokens
 func (t *Tokenizer) parseToken(token string) Token {
-	for tt := TokenType(0) ; tt < NoMatch ; tt++ {
+	for tt := TokenType(0); tt < NoMatch; tt++ {
 		td := tokenDefs[tt]
 		submatches := td.FindStringSubmatch(token)
 		if submatches != nil {
@@ -255,15 +253,15 @@ func (f *Token) getOctaveStep() int {
 	}
 }
 
-var pitches = [8]note.Pitch{note.A, note.B, note.C, note.D, note.E, note.F, note.G}
+var pitches = [8]song.Pitch{song.A, song.B, song.C, song.D, song.E, song.F, song.G}
 
 // A note should come represented by an array where
 // 0: pitch - 1: halftone - 2: length - 3: dots
 // todo: return t, error if a given note can't be sharp or flat
-func (f *Token) getNote() (note.Note, error) {
+func (f *Token) getNote() (song.Note, error) {
 	f.assertType(Note)
 
-	var pitch note.Pitch
+	var pitch song.Pitch
 	c := f.Submatch[0][0]
 	if c >= 'A' && c <= 'Z' {
 		pitch = pitches[c-'A']
@@ -273,19 +271,19 @@ func (f *Token) getNote() (note.Note, error) {
 		panic(fmt.Sprintf("BUG detected. Pitch can't be '%c'", c))
 	}
 
-	n := note.Note{
+	n := song.Note{
 		Pitch:    pitch,
 		Length:   defaultLength,
-		Halftone: note.NoHalftone,
+		Halftone: song.NoHalftone,
 		Dots:     len(f.Submatch[3]),
 	}
 	// get halftone
 	if len(f.Submatch[1]) > 0 {
 		switch f.Submatch[1][0] {
 		case '+', '#':
-			n.Halftone = note.Sharp
+			n.Halftone = song.Sharp
 		case '-':
-			n.Halftone = note.Flat
+			n.Halftone = song.Flat
 		default:
 			panic(fmt.Sprintf("BUG detected. Wrong halftone %q", f.Submatch[1]))
 		}
@@ -317,9 +315,9 @@ func (token *Token) getVolume() int {
 	return mustAtoi(token.Submatch[0])
 }
 
-func (token *Token) getSilence() note.Note {
+func (token *Token) getSilence() song.Silence {
 	token.assertType(Silence)
-	n := note.Note{Pitch: note.Silence}
+	n := song.Silence{}
 	if len(token.Submatch[0]) == 0 {
 		n.Length = defaultLength
 		return n

@@ -2,8 +2,6 @@ package song
 
 import (
 	"time"
-
-	"github.com/mariomac/msxmml/pkg/song/note"
 )
 
 const defaultOctave = 4
@@ -45,11 +43,12 @@ func (s *Song) AddItems(channelName string, items ...TablatureItem) {
 
 // TablatureItem pseudo-union type: whatever you can find in a tablature
 type TablatureItem struct {
-	Instrument  *Instrument
-	Note        *note.Note
-	SetOctave   *int
-	OctaveStep  *int // negative: decrements
-	Volume      *int // 0 to 15
+	Instrument *Instrument
+	Note       *Note
+	Silence    *Silence
+	SetOctave  *int
+	OctaveStep *int // negative: decrements
+	Volume     *int // 0 to 15
 }
 
 type Channel struct {

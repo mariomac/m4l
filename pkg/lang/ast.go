@@ -172,7 +172,7 @@ func (p *Parser) tablatureNode(s *song.Song, allowConstants bool) (song.Tablatur
 			t = append(t, song.TablatureItem{Volume: &n})
 		case Silence:
 			n := tok.getSilence()
-			t = append(t, song.TablatureItem{Note: &n})
+			t = append(t, song.TablatureItem{Silence: &n})
 		case Octave:
 			o := tok.getOctave()
 			t = append(t, song.TablatureItem{SetOctave: &o})
@@ -219,7 +219,7 @@ func (p *Parser) tupletNode() (song.Tablature, error) {
 			t = append(t, song.TablatureItem{Volume: &n})
 		case Silence:
 			n := tok.getSilence()
-			t = append(t, song.TablatureItem{Note: &n})
+			t = append(t, song.TablatureItem{Silence: &n})
 		case Octave:
 			o := tok.getOctave()
 			t = append(t, song.TablatureItem{SetOctave: &o})

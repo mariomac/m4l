@@ -2,7 +2,6 @@ package reader
 
 import (
 	"github.com/mariomac/msxmml/pkg/song"
-	"github.com/mariomac/msxmml/pkg/song/note"
 )
 
 type SyncedBlock struct {
@@ -30,7 +29,7 @@ func (sbr *SyncedBlock) Next() (song.TablatureItem, string) {
 	soonerChannel := ""
 	for name, channel := range sbr.block.Channels {
 		cnt := sbr.counters[name]
-		if cnt.index > len(channel.Items) {
+		if cnt.index >= len(channel.Items) {
 			continue
 		}
 		if soonerChannel == "" || cnt.time < sbr.counters[soonerChannel].time {
@@ -54,11 +53,8 @@ func itemDurationBeats(it song.TablatureItem) float64 {
 	if it.Note != nil {
 		return 4 / float64(it.Note.Length)
 	}
-
-	Instrument * Instrument
-	ConstantRef * string
-	Note * note.Note
-	SetOctave * int
-	OctaveStep * int // negative: decrements
-	Volume * int     // 0 to 15
+	if it.Silence != nil {
+		return 4 / float64(it.Silence.Length)
+	}
+	return 0
 }

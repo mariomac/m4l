@@ -4,8 +4,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mariomac/msxmml/pkg/song/note"
-
 	"github.com/mariomac/msxmml/pkg/song"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -68,9 +66,9 @@ loop:
 		s.Constants["voice"][0].Instrument)
 	// check $const constant definition
 	require.Len(t, s.Constants["const"], 3)
-	for n, exp := range []note.Pitch{note.A, note.B, note.C} {
+	for n, exp := range []song.Pitch{song.A, song.B, song.C} {
 		assert.Equal(t,
-			&note.Note{Pitch: exp, Length: defaultLength},
+			&song.Note{Pitch: exp, Length: defaultLength},
 			s.Constants["const"][n].Note)
 	}
 	// check @ch1 <- c1.d-2..e+4$const$const
@@ -78,32 +76,32 @@ loop:
 	require.Contains(t, s.Blocks[0].Channels, "ch1")
 	require.Len(t, s.Blocks[0].Channels["ch1"].Items, 9)
 	assert.Equal(t,
-		&note.Note{Pitch: note.C, Length: 1, Dots: 1},
+		&song.Note{Pitch: song.C, Length: 1, Dots: 1},
 		s.Blocks[0].Channels["ch1"].Items[0].Note)
 	assert.Equal(t,
-		&note.Note{Pitch: note.D, Length: 2, Dots: 2, Halftone: note.Flat},
+		&song.Note{Pitch: song.D, Length: 2, Dots: 2, Halftone: song.Flat},
 		s.Blocks[0].Channels["ch1"].Items[1].Note)
 	assert.Equal(t,
-		&note.Note{Pitch: note.E, Length: 4, Halftone: note.Sharp},
+		&song.Note{Pitch: song.E, Length: 4, Halftone: song.Sharp},
 		s.Blocks[0].Channels["ch1"].Items[2].Note)
 	/// constants unroll
 	assert.Equal(t,
-		&note.Note{Pitch: note.A, Length: 4},
+		&song.Note{Pitch: song.A, Length: 4},
 		s.Blocks[0].Channels["ch1"].Items[3].Note)
 	assert.Equal(t,
-		&note.Note{Pitch: note.B, Length: 4},
+		&song.Note{Pitch: song.B, Length: 4},
 		s.Blocks[0].Channels["ch1"].Items[4].Note)
 	assert.Equal(t,
-		&note.Note{Pitch: note.C, Length: 4},
+		&song.Note{Pitch: song.C, Length: 4},
 		s.Blocks[0].Channels["ch1"].Items[5].Note)
 	assert.Equal(t,
-		&note.Note{Pitch: note.A, Length: 4},
+		&song.Note{Pitch: song.A, Length: 4},
 		s.Blocks[0].Channels["ch1"].Items[6].Note)
 	assert.Equal(t,
-		&note.Note{Pitch: note.B, Length: 4},
+		&song.Note{Pitch: song.B, Length: 4},
 		s.Blocks[0].Channels["ch1"].Items[7].Note)
 	assert.Equal(t,
-		&note.Note{Pitch: note.C, Length: 4},
+		&song.Note{Pitch: song.C, Length: 4},
 		s.Blocks[0].Channels["ch1"].Items[8].Note)
 	//	check loop label
 	assert.Equal(t, 1, s.LoopIndex)
@@ -116,10 +114,10 @@ loop:
 		14,
 		*s.Blocks[1].Channels["ch1"].Items[0].Volume)
 	assert.Equal(t,
-		&note.Note{Pitch: note.Silence, Length: 4},
-		s.Blocks[1].Channels["ch1"].Items[1].Note)
+		&song.Silence{Length: 4},
+		s.Blocks[1].Channels["ch1"].Items[1].Silence)
 	assert.Equal(t,
-		&note.Note{Pitch: note.A, Length: defaultLength},
+		&song.Note{Pitch: song.A, Length: defaultLength},
 		s.Blocks[1].Channels["ch1"].Items[2].Note)
 	assert.Equal(t,
 		1,
@@ -131,27 +129,27 @@ loop:
 		13,
 		*s.Blocks[1].Channels["ch2"].Items[0].Volume)
 	assert.Equal(t,
-		&note.Note{Pitch: note.A, Length: defaultLength},
+		&song.Note{Pitch: song.A, Length: defaultLength},
 		s.Blocks[1].Channels["ch2"].Items[1].Note)
 	assert.Equal(t,
-		&note.Note{Pitch: note.C, Length: defaultLength},
+		&song.Note{Pitch: song.C, Length: defaultLength},
 		s.Blocks[1].Channels["ch2"].Items[2].Note)
 	assert.Equal(t,
 		2,
 		*s.Blocks[1].Channels["ch2"].Items[3].SetOctave)
 	assert.Equal(t,
-		&note.Note{Pitch: note.D, Length: defaultLength},
+		&song.Note{Pitch: song.D, Length: defaultLength},
 		s.Blocks[1].Channels["ch2"].Items[4].Note)
 
 	// check synced block after barrier
 	// @ch1 <- {dec}3
 	assert.Equal(t,
-		&note.Note{Pitch: note.D, Tuplet: 3, Length: defaultLength},
+		&song.Note{Pitch: song.D, Tuplet: 3, Length: defaultLength},
 		s.Blocks[2].Channels["ch1"].Items[0].Note)
 	assert.Equal(t,
-		&note.Note{Pitch: note.E, Tuplet: 3, Length: defaultLength},
+		&song.Note{Pitch: song.E, Tuplet: 3, Length: defaultLength},
 		s.Blocks[2].Channels["ch1"].Items[1].Note)
 	assert.Equal(t,
-		&note.Note{Pitch: note.C, Tuplet: 3, Length: defaultLength},
+		&song.Note{Pitch: song.C, Tuplet: 3, Length: defaultLength},
 		s.Blocks[2].Channels["ch1"].Items[2].Note)
 }

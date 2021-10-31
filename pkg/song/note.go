@@ -1,16 +1,15 @@
-package note
+package song
 
 type Pitch uint8
 
 const (
-	Silence Pitch = 0
-	A       Pitch = 'a'
-	B       Pitch = 'b'
-	C       Pitch = 'c'
-	D       Pitch = 'd'
-	E       Pitch = 'e'
-	F       Pitch = 'f'
-	G       Pitch = 'g'
+A Pitch = 'a'
+	B Pitch = 'b'
+	C Pitch = 'c'
+	D Pitch = 'd'
+	E Pitch = 'e'
+	F Pitch = 'f'
+	G Pitch = 'g'
 )
 
 type Halftone uint8
@@ -28,4 +27,8 @@ type Note struct {
 	Tuplet   int // e.g. 3 means this note is part of a triplet
 	Halftone Halftone
 	Dots     int // number of dots
+}
+
+type Silence struct {
+	Length int // as Note's Length field
 }
