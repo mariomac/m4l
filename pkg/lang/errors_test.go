@@ -29,3 +29,14 @@ $foo := ( wave: square )
 	assert.Equal(t, 2, terr.t.Row)
 	assert.Equal(t, 11, terr.t.Col)
 }
+
+func TestConstantIntoConstant(t *testing.T) {
+	_, err := Parse(strings.NewReader(`
+$foo := abc
+$bar := a $foo b 
+`))
+	assert.Error(t, err)
+	assert.IsType(t, ParserError{}, err)
+	assert.Equal(t, 3, err.(ParserError).t.Row)
+	assert.Equal(t, 11, err.(ParserError).t.Col)
+}

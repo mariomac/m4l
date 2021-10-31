@@ -44,7 +44,8 @@ loop:
 ## Grammar
 
 ```
-program := constantDef* statement* ('loop:' statement*)?
+program := header? constantDef* statement* ('loop:' statement*)?
+header := (KEY VAL\n)* 
 
 constantDef := ID ':=' (instrumentDef | tablature)
 

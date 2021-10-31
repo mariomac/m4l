@@ -96,7 +96,7 @@ func (p *Parser) constantDefNode(s *song.Song) error {
 		}
 		s.Constants[id] = song.Tablature{{Instrument: &inst}}
 	default:
-		tabl, err := p.tablatureNode(s)
+		tabl, err := p.tablatureNode(s, false)
 		if err != nil {
 			return err
 		}
@@ -143,12 +143,15 @@ func (p *Parser) instrumentDefinitionNode(class string) (song.Instrument, error)
 }
 
 // tablature := (ID | NOTE | SILENCE | OCTAVE | INCOCT | DECOCT | tuplet | '|')+
-func (p *Parser) tablatureNode(s *song.Song) (song.Tablature, error) {
+func (p *Parser) tablatureNode(s *song.Song, allowConstants bool) (song.Tablature, error) {
 	t := song.Tablature{}
 	for !p.t.EOF() {
 		tok := p.t.Get()
 		switch tok.Type {
 		case ConstRef:
+			if !allowConstants {
+				return nil, ParserError{t: tok, msg: "can't refer constants inside constants"}
+			}
 			// todo: test that unexisting const id returns an error
 			id := tok.getConstRefId()
 			if _, ok := s.Constants[id]; !ok {
@@ -260,7 +263,7 @@ func (p *Parser) channelFillNode(s *song.Song) error {
 	if !p.t.Next() {
 		return p.eofErr()
 	}
-	tab, err := p.tablatureNode(s)
+	tab, err := p.tablatureNode(s, true)
 	if err != nil {
 		return err
 	}
