@@ -1,6 +1,8 @@
 package reader
 
 import (
+	"sort"
+
 	"github.com/mariomac/msxmml/pkg/song"
 )
 
@@ -8,6 +10,8 @@ type SyncedBlock struct {
 	block    song.SyncedBlock
 	counters map[string]channelCounter
 	time     float64 // time in beats fractions
+	// reading prioritizing by sorted channels allow a more predictable/debuggable/testable output
+	sortedChannels []string
 }
 
 type channelCounter struct {
@@ -17,17 +21,21 @@ type channelCounter struct {
 
 func NewSyncedBlock(block song.SyncedBlock) SyncedBlock {
 	counters := map[string]channelCounter{}
+	channelNames := make([]string, 0, len(block.Channels))
 	for chn := range block.Channels {
+		channelNames = append(channelNames, chn)
 		counters[chn] = channelCounter{}
 	}
-	return SyncedBlock{block: block, counters: counters}
+	sort.Strings(channelNames)
+	return SyncedBlock{block: block, counters: counters, sortedChannels: channelNames}
 }
 
 // Next extracts the next item to be played/enqueued. Returns it as well as the channel where it belongs to.
-// If there are no more items, returns empty channel
+// If there are no more items, returns empty channel string
 func (sbr *SyncedBlock) Next() (song.TablatureItem, string) {
 	soonerChannel := ""
-	for name, channel := range sbr.block.Channels {
+	for _, name := range sbr.sortedChannels {
+		channel := sbr.block.Channels[name]
 		cnt := sbr.counters[name]
 		if cnt.index >= len(channel.Items) {
 			continue

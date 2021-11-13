@@ -32,56 +32,50 @@ func TestSyncedBlockReader(t *testing.T) {
 	}}
 	reader := NewSyncedBlock(sb)
 
-	read := map[string][]song.TablatureItem{}
-	for i := 0; i < 6; i++ {
-		ti, ch := reader.Next()
-		read[ch] = append(read[ch], ti)
-	}
-	assert.Equal(t, read, map[string][]song.TablatureItem{
-		"a": {
-			song.TablatureItem{Instrument: &song.Instrument{Class: "psg"}},
-			song.TablatureItem{Silence: &song.Silence{Length: 1}},
-		},
-		"b": {
-			song.TablatureItem{Instrument: &song.Instrument{Class: "psg2"}},
-			song.TablatureItem{Note: &song.Note{Pitch: song.C, Length: 2}},
-		},
-		"c": {
-			song.TablatureItem{SetOctave: &one},
-			song.TablatureItem{Silence: &song.Silence{Length: 2}},
-		},
-	})
+	item, name := reader.Next()
+	assert.Equal(t, "a", name)
+	assert.Equal(t, song.TablatureItem{Instrument: &song.Instrument{Class: "psg"}}, item)
+	item, name = reader.Next()
+	assert.Equal(t, "a", name)
+	assert.Equal(t, song.TablatureItem{Silence: &song.Silence{Length: 1}}, item)
+	item, name = reader.Next()
+	assert.Equal(t, "b", name)
+	assert.Equal(t, song.TablatureItem{Instrument: &song.Instrument{Class: "psg2"}}, item)
+	item, name = reader.Next()
+	assert.Equal(t, "b", name)
+	assert.Equal(t, song.TablatureItem{Note: &song.Note{Pitch: song.C, Length: 2}}, item)
+	item, name = reader.Next()
+	assert.Equal(t, "c", name)
+	assert.Equal(t, song.TablatureItem{SetOctave: &one}, item)
+	item, name = reader.Next()
+	assert.Equal(t, "c", name)
+	assert.Equal(t, song.TablatureItem{Silence: &song.Silence{Length: 2}}, item)
+	item, name = reader.Next()
+	assert.Equal(t, "b", name)
+	assert.Equal(t, song.TablatureItem{OctaveStep: &one}, item)
+	item, name = reader.Next()
+	assert.Equal(t, "b", name)
+	assert.Equal(t, song.TablatureItem{Silence: &song.Silence{Length: 2}}, item)
+	item, name = reader.Next()
+	assert.Equal(t, "c", name)
+	assert.Equal(t, song.TablatureItem{Note: &song.Note{Pitch: song.D, Length: 4}}, item)
+	item, name = reader.Next()
+	assert.Equal(t, "c", name)
+	assert.Equal(t, song.TablatureItem{Note: &song.Note{Pitch: song.E, Length: 4}}, item)
 
-	read = map[string][]song.TablatureItem{}
-	for i := 0; i < 3; i++ {
-		ti, ch := reader.Next()
-		read[ch] = append(read[ch], ti)
-	}
-	assert.Equal(t, read, map[string][]song.TablatureItem{
-		"b": {
-			song.TablatureItem{OctaveStep: &one},
-			song.TablatureItem{Silence: &song.Silence{Length: 2}},
-		},
-		"c": {song.TablatureItem{Note: &song.Note{Pitch: song.D, Length: 4}}},
-	})
-	ti, ch := reader.Next()
-	assert.Equal(t, "c", ch)
-	assert.Equal(t, song.TablatureItem{Note: &song.Note{Pitch: song.E, Length: 4}}, ti)
-	read = map[string][]song.TablatureItem{}
-	for i := 0; i < 2; i++ {
-		ti, ch = reader.Next()
-		read[ch] = append(read[ch], ti)
-	}
-	assert.Equal(t, read, map[string][]song.TablatureItem{
-		"a": {song.TablatureItem{Note: &song.Note{Pitch: song.A, Length: 4}}},
-		"b": {song.TablatureItem{Note: &song.Note{Pitch: song.F, Length: 4}}},
-	})
-	ti, ch = reader.Next()
-	assert.Equal(t, "a", ch)
-	assert.Equal(t, song.TablatureItem{Note: &song.Note{Pitch: song.B, Length: 4}}, ti)
+	item, name = reader.Next()
+	assert.Equal(t, "a", name)
+	assert.Equal(t, song.TablatureItem{Note: &song.Note{Pitch: song.A, Length: 4}}, item)
+	item, name = reader.Next()
+	assert.Equal(t, "b", name)
+	assert.Equal(t, song.TablatureItem{Note: &song.Note{Pitch: song.F, Length: 4}}, item)
+
+	item, name = reader.Next()
+	assert.Equal(t, "a", name)
+	assert.Equal(t, song.TablatureItem{Note: &song.Note{Pitch: song.B, Length: 4}}, item)
 
 	// end of tablature. Nothing else to read
-	_, ch = reader.Next()
-	assert.Empty(t, ch)
+	_, name = reader.Next()
+	assert.Empty(t, name)
 }
 
