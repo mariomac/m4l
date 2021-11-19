@@ -38,9 +38,10 @@ func Parse(reader io.ReadSeeker) (*song.Song, error) {
 		t: t,
 	}
 	s := &song.Song{
-		Properties: props,
-		Constants:  map[string]song.Tablature{},
-		LoopIndex:  -1,
+		Properties:   props,
+		Constants:    map[string]song.Tablature{},
+		ChannelNames: map[string]struct{}{},
+		LoopIndex:    -1,
 	}
 
 	if err := parseBody(s, p); err != nil {

@@ -32,6 +32,7 @@ func NewSyncedBlock(block song.SyncedBlock) SyncedBlock {
 
 // Next extracts the next item to be played/enqueued. Returns it as well as the channel where it belongs to.
 // If there are no more items, returns empty channel string
+// TODO: expand constants
 func (sbr *SyncedBlock) Next() (song.TablatureItem, string) {
 	soonerChannel := ""
 	for _, name := range sbr.sortedChannels {
@@ -51,18 +52,8 @@ func (sbr *SyncedBlock) Next() (song.TablatureItem, string) {
 		it := sbr.block.Channels[soonerChannel].Items[cnt.index]
 		sbr.counters[soonerChannel] = channelCounter{
 			index: cnt.index + 1,
-			time:  cnt.time + itemDurationBeats(it),
+			time:  cnt.time + it.DurationBeats(),
 		}
 		return it, soonerChannel
 	}
-}
-
-func itemDurationBeats(it song.TablatureItem) float64 {
-	if it.Note != nil {
-		return 4 / float64(it.Note.Length)
-	}
-	if it.Silence != nil {
-		return 4 / float64(it.Silence.Length)
-	}
-	return 0
 }

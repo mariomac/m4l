@@ -3,7 +3,7 @@ package song
 type Pitch uint8
 
 const (
-A Pitch = 'a'
+	A Pitch = 'a'
 	B Pitch = 'b'
 	C Pitch = 'c'
 	D Pitch = 'd'

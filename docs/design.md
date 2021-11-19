@@ -8,7 +8,7 @@
 
 ; program header must start with a set of "key value" properties
 
-; tempo, specified as the number of beats per second (1 quarter/crotchet == 1 beat)
+; tempo, specified as the number of beats per minute (1 quarter/crotchet == 1 beat)
 tempo 120
 ; for retro-machines, the destination refresh rate (50 or 60 Hz) must be specified
 ; to properly calculate the tempo
@@ -68,7 +68,7 @@ SYNC := '-'*
 ## Binary compilation for MSX PSG
 
 `
-loop start byte (2 bytes) == end of array if not loop
+loop start byte (2 bytes) == 0 if no loop
 tablature instructions (variable-byte encoding)
 `
 

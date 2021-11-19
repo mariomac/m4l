@@ -8,9 +8,10 @@ const defaultOctave = 4
 
 // TODO: test all
 type Song struct {
-	Properties map[string]string
-	Constants  map[string]Tablature
-	Blocks     []SyncedBlock
+	Properties   map[string]string
+	Constants    map[string]Tablature
+	Blocks       []SyncedBlock
+	ChannelNames map[string]struct{}
 	// the index of the Synced block where the loop starts
 	// negative number if no loop
 	LoopIndex int
@@ -36,6 +37,7 @@ func (s *Song) AddItems(channelName string, items ...TablatureItem) {
 	ch, ok := s.endBlock().Channels[channelName]
 	if !ok || ch == nil {
 		ch = &Channel{}
+		s.ChannelNames[channelName] = struct{}{}
 		s.endBlock().Channels[channelName] = ch
 	}
 	ch.Items = append(ch.Items, items...)
@@ -49,6 +51,16 @@ type TablatureItem struct {
 	SetOctave  *int
 	OctaveStep *int // negative: decrements
 	Volume     *int // 0 to 15
+}
+
+func (ti *TablatureItem) DurationBeats() float64 {
+	if ti.Note != nil {
+		return 4 / float64(ti.Note.Length)
+	}
+	if ti.Silence != nil {
+		return 4 / float64(ti.Silence.Length)
+	}
+	return 0
 }
 
 type Channel struct {
