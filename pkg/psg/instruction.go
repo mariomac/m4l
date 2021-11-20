@@ -5,6 +5,10 @@ import "fmt"
 type instructionType int
 
 const (
+	maxWaitValue = 31 // 5 bytes
+)
+
+const (
 	envelopeCycle instructionType = iota
 	wait
 	toneA

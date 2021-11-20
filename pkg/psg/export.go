@@ -116,16 +116,16 @@ func (pe *psgEncoder) encodedWaitTime(waitFunc func() int) []byte {
 	if ftw == 0 {
 		return nil
 	}
-	if ftw > math.MaxUint16 {
-		log.Printf("Warning: we are going to wait more than %v frames (%v). Truncating",
-			math.MaxUint16, ftw)
-		ftw = math.MaxUint16
-	}
+	var waits []instruction
+
 	pe.framesCounter += ftw
-	return (&instruction{
-		Type: wait,
-		Data: uint16(ftw),
-	}).encode()
+	// wait instruction does not allow more than 5-byte wait times. Concatenate waits if needed
+	for ftw > maxWaitValue {
+		waits = append(waits, instruction{Type: wait, Data: maxWaitValue})
+		ftw -= maxWaitValue
+	}
+	waits = append(waits, instruction{Type: wait, Data: uint16(ftw)})
+	return encodeInstructions(waits)
 }
 
 func pow2(n int) int {

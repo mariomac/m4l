@@ -26,7 +26,8 @@ func TestExportNotes(t *testing.T) {
 		{Type: toneC, Data: 0xe3},
 		{Type: wait, Data: 30},
 		{Type: toneB, Data: 0x153}, // e1
-		{Type: wait, Data: 60},
+		{Type: wait, Data: 31},
+		{Type: wait, Data: 29},
 		{Type: toneA, Data: 0xE3}, //b2
 		{Type: wait, Data: 30},
 		{Type: toneC, Data: 0x17d},
