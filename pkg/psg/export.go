@@ -119,7 +119,7 @@ func (pe *psgEncoder) encodedWaitTime(waitFunc func() int) []byte {
 	var waits []instruction
 
 	pe.framesCounter += ftw
-	// wait instruction does not allow more than 5-byte wait times. Concatenate waits if needed
+	// wait instruction does not allow more than 5-byte wait times (32 frames). Concatenate waits if needed
 	for ftw > maxWaitValue {
 		waits = append(waits, instruction{Type: wait, Data: maxWaitValue})
 		ftw -= maxWaitValue

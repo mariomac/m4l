@@ -80,3 +80,12 @@ noteA: MACRO hi, lo
         ld      e, hi
         call    BIOS_WRTPSG
 ENDM
+
+noteB: MACRO hi, lo
+        ld      a, REG2_B_NOTE_L
+        ld      e, lo
+        call    BIOS_WRTPSG
+        ld      a, REG3_B_NOTE_H
+        ld      e, hi
+        call    BIOS_WRTPSG
+ENDM
