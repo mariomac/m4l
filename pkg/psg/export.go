@@ -20,12 +20,12 @@ const (
 )
 
 type psgEncoder struct {
-	octave          int
 	bpm             int
 	hz              int
 	framesCounter   int
 	chFramesCounter map[string]int
 	channelOrder    map[string]int
+	octaves         map[string]int
 }
 
 func Export(s *song.Song) ([]byte, error) {
@@ -85,8 +85,10 @@ func newPsgEncoder(s *song.Song) (*psgEncoder, error) {
 	}
 	// channel frames counter must be preloaded with all the channels
 	cfc := map[string]int{}
+	octaves := map[string]int{}
 	for name := range s.ChannelNames {
 		cfc[name] = 0
+		octaves[name] = defaultOctave
 	}
 	return &psgEncoder{
 		bpm:             bps,
@@ -94,21 +96,25 @@ func newPsgEncoder(s *song.Song) (*psgEncoder, error) {
 		framesCounter:   0,
 		chFramesCounter: cfc,
 		channelOrder:    map[string]int{},
-		octave:          defaultOctave,
+		octaves:         octaves,
 	}, nil
 }
 
 func (pe *psgEncoder) encodeTablatureItem(ti song.TablatureItem, channel string) ([]byte, error) {
-	var instr *instruction
 	switch {
 	case ti.Note != nil:
 		var err error
-		instr, err = pe.encodeNote(ti.Note, channel)
+		instr, err := pe.encodeNote(ti.Note, channel)
 		if err != nil {
 			return nil, err
 		}
+		return instr.encode(), nil
+	case ti.SetOctave != nil:
+		pe.octaves[channel] = *ti.SetOctave
+	case ti.OctaveStep != nil:
+		pe.octaves[channel] += *ti.OctaveStep
 	}
-	return instr.encode(), nil
+	return nil, nil
 }
 
 func (pe *psgEncoder) encodedWaitTime(waitFunc func() int) []byte {
@@ -160,7 +166,7 @@ func (c *psgEncoder) encodeNote(note *song.Note, channel string) (*instruction, 
 		return nil, fmt.Errorf("can't assign an order to channel %q. PSG can't handle more than 3 channels", channels)
 	}
 	// get tone part
-	freq, err := c.frequencyFor(note)
+	freq, err := c.frequencyFor(note, c.octaves[channel])
 	if err != nil {
 		return nil, err
 	}
@@ -372,14 +378,14 @@ var frequencies = map[noteKey]uint16{
 	{pitch: song.B, octave: 8}:                   0xE,
 }
 
-func (c *psgEncoder) frequencyFor(n *song.Note) (uint16, error) {
-	freq, ok := frequencies[noteKey{pitch: n.Pitch, half: n.Halftone, octave: c.octave}]
+func (c *psgEncoder) frequencyFor(n *song.Note, octave int) (uint16, error) {
+	freq, ok := frequencies[noteKey{pitch: n.Pitch, half: n.Halftone, octave: octave}]
 	if !ok {
 		ht := byte(n.Halftone)
 		if ht == 0 {
 			ht = ' '
 		}
-		return 0, fmt.Errorf("unsupported note: %c%c for octave %d", n.Pitch, ht, c.octave)
+		return 0, fmt.Errorf("unsupported note: %c%c for octave %d", n.Pitch, ht, octave)
 	}
 	return freq, nil
 }
