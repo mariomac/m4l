@@ -22,6 +22,7 @@ const (
 type psgEncoder struct {
 	bpm             int
 	hz              int
+	channels        channelReg
 	framesCounter   int
 	chFramesCounter map[string]int
 	channelOrder    map[string]int
@@ -93,6 +94,7 @@ func newPsgEncoder(s *song.Song) (*psgEncoder, error) {
 	return &psgEncoder{
 		bpm:             bps,
 		hz:              hz,
+		channels:        channelReg(0b111_111), // all the channels are disabled
 		framesCounter:   0,
 		chFramesCounter: cfc,
 		channelOrder:    map[string]int{},
@@ -103,16 +105,27 @@ func newPsgEncoder(s *song.Song) (*psgEncoder, error) {
 func (pe *psgEncoder) encodeTablatureItem(ti song.TablatureItem, channel string) ([]byte, error) {
 	switch {
 	case ti.Note != nil:
-		var err error
-		instr, err := pe.encodeNote(ti.Note, channel)
+		instrs, err := pe.encodeNote(ti.Note, channel)
 		if err != nil {
 			return nil, err
 		}
-		return instr.encode(), nil
+		return encodeInstructions(instrs), nil
 	case ti.SetOctave != nil:
 		pe.octaves[channel] = *ti.SetOctave
 	case ti.OctaveStep != nil:
 		pe.octaves[channel] += *ti.OctaveStep
+	case ti.Silence != nil:
+		instrs, err := pe.encodeSilence(ti.Silence, channel)
+		if err != nil {
+			return nil, err
+		}
+		return encodeInstructions(instrs), nil
+	case ti.Volume != nil:
+		// TODO
+	case ti.Instrument != nil:
+		// TODO
+	default:
+		panic(fmt.Sprintf("BUG! wrong value %#v", ti))
 	}
 	return nil, nil
 }
@@ -142,7 +155,42 @@ func pow2(n int) int {
 	return pow
 }
 
-func (c *psgEncoder) encodeNote(note *song.Note, channel string) (*instruction, error) {
+func (c *psgEncoder) encodeSilence(silence *song.Silence, channel string) ([]instruction, error) {
+	// enable channel, if not yet enabled
+	channelOrder := c.orderFor(channel)
+	if channelOrder >= maxChannels {
+		return nil,
+			fmt.Errorf("can't assign an order to channel %q. PSG can't handle more than 3 channels", channels)
+	}
+	var instrs []instruction
+	// todo: make sure we enable/disable channels at the beginning of a loop, to avoid loosing status
+	if c.channels.toneEnabled(channelOrder) {
+		// todo: optimize: wrap multiple channel sets into one single instruction
+		c.channels.disableTone(channelOrder)
+		instrs = append(instrs, instruction{Type: channels, Data: uint16(c.channels)})
+	}
+
+	frames := c.framesFor(silence.Length, 1, 1)
+	c.addFramesCount(channel, frames)
+	return instrs, nil
+}
+
+func (c *psgEncoder) encodeNote(note *song.Note, channel string) ([]instruction, error) {
+	// enable channel, if not yet enabled
+	channelOrder := c.orderFor(channel)
+	if channelOrder >= maxChannels {
+		return nil,
+			fmt.Errorf("can't assign an order to channel %q. PSG can't handle more than 3 channels", channels)
+	}
+	var instrs []instruction
+	// todo: make sure we enable/disable channels at the beginning of a loop, to avoid loosing status
+	if !c.channels.toneEnabled(channelOrder) {
+		// todo: set tone/noise depending on the instrument type
+		c.channels.enableTone(channelOrder)
+		// todo: optimize: wrap multiple channel sets into one single instruction
+		instrs = append(instrs, instruction{Type: channels, Data: uint16(c.channels)})
+	}
+
 	var noteTypes = [maxChannels]instructionType{toneA, toneB, toneC}
 	// calculate how many frames we should wait after this note and advance the channel beats
 	// counter
@@ -161,19 +209,16 @@ func (c *psgEncoder) encodeNote(note *song.Note, channel string) (*instruction, 
 	frames := c.framesFor(note.Length, dnd, dor)
 	c.addFramesCount(channel, frames)
 
-	channelOrder := c.orderFor(channel)
-	if channelOrder >= maxChannels {
-		return nil, fmt.Errorf("can't assign an order to channel %q. PSG can't handle more than 3 channels", channels)
-	}
 	// get tone part
 	freq, err := c.frequencyFor(note, c.octaves[channel])
 	if err != nil {
 		return nil, err
 	}
-	return &instruction{
+	instrs = append(instrs, instruction{
 		Type: noteTypes[channelOrder],
 		Data: freq,
-	}, nil
+	})
+	return instrs, nil
 }
 
 // todo: calculate accumulated error
