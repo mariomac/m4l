@@ -85,8 +85,10 @@ b1xxxxxxx:
         bit 6, a
         jp nz, b11xxxxxx
 enable_channels: ; 10xxxxxx
+        ld      e, a
+        ld	a, REG7_CHANNEL_SET
+        CALL    BIOS_WRTPSG
         jp parse_instruction
-
 b11xxxxxx:
         bit 5, a
         jp nz, b111xxxxx

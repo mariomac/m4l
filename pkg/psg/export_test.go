@@ -107,3 +107,24 @@ func TestSilences(t *testing.T) {
 	assert.Equal(t, expected, songBytes)
 
 }
+
+func TestParseTupletWithOctaveChange(t *testing.T) {
+	s, err := lang.Parse(strings.NewReader(`
+@ch1 <- (a>aa)3 a
+`))
+	require.NoError(t, err)
+	songBytes, err := Export(s)
+	require.NoError(t, err)
+	expected := append([]byte{0, 0}, encodeInstructions([]instruction{
+		{Type: channels, Data: 0b111_110},
+		{Type: toneA, Data: 0xfe}, // octave 4
+		{Type: wait, Data: 20},
+		{Type: toneA, Data: 0x7F}, // octave 5
+		{Type: wait, Data: 20},
+		{Type: toneA, Data: 0x7F}, // octave 5
+		{Type: wait, Data: 20},
+		{Type: toneA, Data: 0x7F}, // octave 5
+		{Type: wait, Data: 30},
+	})...)
+	assert.Equal(t, expected, songBytes)
+}

@@ -153,3 +153,24 @@ loop:
 		&song.Note{Pitch: song.C, Tuplet: 3, Length: defaultLength},
 		s.Blocks[2].Channels["ch1"].Items[2].Note)
 }
+
+func TestParseTupletWithOctaveChange(t *testing.T) {
+	s, err := Parse(strings.NewReader(`
+@ch1 <- o4 (ab>c)3 a
+`))
+	require.NoError(t, err)
+	it := s.Blocks[0].Channels["ch1"].Items
+	require.Len(t, it, 6)
+	require.NotNil(t, it[0].SetOctave)
+	assert.Equal(t, 4, *it[0].SetOctave)
+	require.NotNil(t, it[1].Note)
+	require.Equal(t, song.Note{Pitch: song.A, Length: 4, Tuplet: 3}, *it[1].Note)
+	require.NotNil(t, it[2].Note)
+	require.Equal(t, song.Note{Pitch: song.B, Length: 4, Tuplet: 3}, *it[2].Note)
+	require.NotNil(t, it[3].OctaveStep)
+	require.Equal(t, 1, *it[3].OctaveStep)
+	require.NotNil(t, it[4].Note)
+	require.Equal(t, song.Note{Pitch: song.C, Length: 4, Tuplet: 3}, *it[4].Note)
+	require.NotNil(t, it[5].Note)
+	require.Equal(t, song.Note{Pitch: song.A, Length: 4}, *it[5].Note)
+}

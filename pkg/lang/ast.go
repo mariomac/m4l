@@ -234,7 +234,6 @@ func (p *Parser) tupletNode() (song.Tablature, error) {
 					t[n].Note.Tuplet = tn
 				}
 			}
-			p.t.Next()
 			return t, nil
 		case Separator:
 		// just ignore
