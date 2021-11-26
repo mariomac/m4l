@@ -14,9 +14,10 @@ import (
 
 func TestInstrument(t *testing.T) {
 	s, err := Parse(strings.NewReader(`
+; hypothetical instrument
 $voice := trumpet {
-	wave: sine
-	sordine: true
+	wave: sine		; sinusoidal wave
+	sordine: true	; all properties will be parsed as strings, but could be converted
 }
 `))
 	require.NoError(t, err)
@@ -42,10 +43,11 @@ $voice := triki {
 $const := abc
 
 @ch1 <- c1.d-2..e+4$const$const
-loop:
+loop:		; some comments here
 @ch1 <- v14r4a>
 @ch2 <- v13aco2 | d
 ---
+; something after the sync  line
 @ch1 <- (dec)3
 `))
 	require.NoError(t, err)

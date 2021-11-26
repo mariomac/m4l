@@ -138,7 +138,8 @@ func TestExportLoop(t *testing.T) {
 @ch1 <- a b
 loop:
 @ch1 <- > c d
-`)) // todo: document that the > won't increase the octave undefinitely
+; opposite to the constants, the loops keep state so the > wouldn't increase the octave indefinitely
+`))
 	require.NoError(t, err)
 	songBytes, err := Export(s)
 	require.NoError(t, err)
@@ -156,4 +157,51 @@ loop:
 	})...)
 	assert.Equal(t, expected, songBytes)
 
+}
+
+func TestExportConstants(t *testing.T) {
+	s, err := lang.Parse(strings.NewReader(`
+; a constant doesn't hold state (repeating it would increase the octaves indefinitely)
+$a := ab>c
+@ch1 <- d $a < $a < e ; that's why we decrease the octave after the constant reference
+`))
+	require.NoError(t, err)
+	songBytes, err := Export(s)
+	require.NoError(t, err)
+	expected := append([]byte{0, 0}, encodeInstructions([]instruction{
+		{Type: channels, Data: 0b111_110},		// songBytes[2],
+		{Type: toneA, Data: 0x17D},
+		{Type: wait, Data: 30},
+		{Type: toneA, Data: 0xFE},  // first $a
+		{Type: wait, Data: 30},
+		{Type: toneA, Data: 0xE3},
+		{Type: wait, Data: 30},
+		{Type: toneA, Data: 0xD6},
+		{Type: wait, Data: 30},
+		{Type: toneA, Data: 0xFE},   // second $a
+		{Type: wait, Data: 30},
+		{Type: toneA, Data: 0xE3},
+		{Type: wait, Data: 30},
+		{Type: toneA, Data: 0xD6},
+		{Type: wait, Data: 30},
+		{Type: toneA, Data: 0x153},
+		{Type: wait, Data: 30},
+		{Type: end},
+	})...)
+	assert.Equal(t, expected, songBytes)
+}
+
+func TestTemplate(t *testing.T) {
+	t.Skip()
+	s, err := lang.Parse(strings.NewReader(`
+; put your program here
+`))
+	require.NoError(t, err)
+	songBytes, err := Export(s)
+	require.NoError(t, err)
+	expected := append([]byte{0, 0}, encodeInstructions([]instruction{
+		{Type: channels, Data: 0b111_110},		// songBytes[2],
+		{Type: end},
+	})...)
+	assert.Equal(t, expected, songBytes)
 }

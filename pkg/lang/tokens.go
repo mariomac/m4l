@@ -3,19 +3,19 @@ package lang
 import (
 	"bufio"
 	"fmt"
-	"github.com/mariomac/msxmml/pkg/song"
 	"io"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/mariomac/msxmml/pkg/song"
 )
 
 type TokenType int
 
 // ordered by order of precedence in the tokenization process (in case of multiple tokens match a string)
 const (
-	Comment TokenType = iota
-	OpenInstrument
+	OpenInstrument TokenType = iota
 	SendArrow
 	LoopTag
 	OpenTuple
@@ -65,8 +65,6 @@ func (t TokenType) String() string {
 		return "Separator"
 	case ChannelSync:
 		return "ChannelSync"
-	case Comment:
-		return "Comment"
 	case Note:
 		return "Note"
 	case Volume:
@@ -88,14 +86,13 @@ func (t TokenType) String() string {
 }
 
 var tokenDefs = map[TokenType]*regexp.Regexp{
-	Comment:         regexp.MustCompile(`^;\.*$`),
 	OpenInstrument:  regexp.MustCompile(`^(\w+)\s*\{$`),
 	SendArrow:       regexp.MustCompile(`^<-$`),
 	LoopTag:         regexp.MustCompile(`^[Ll][Oo][Oo][Pp]\s*:$`),
 	OpenTuple:       regexp.MustCompile(`^\($`),
 	CloseTuple:      regexp.MustCompile(`^\)(\d)+$`),
 	CloseInstrument: regexp.MustCompile(`^}$`),
-	MapEntry:        regexp.MustCompile(`^(\w+)\s*:\s*([^}#\n]+)$`),
+	MapEntry:        regexp.MustCompile(`^(\w+)\s*:\s*(\w*)$`),
 	Separator:       regexp.MustCompile(`^\|+$`),
 	ConstDef:        regexp.MustCompile(`^\$(\w+)\s*:=$`),
 	ConstRef:        regexp.MustCompile(`^\$(\w+)$`),
@@ -110,6 +107,8 @@ var tokenDefs = map[TokenType]*regexp.Regexp{
 	OctaveStep: regexp.MustCompile(`^(<|>)$`),
 	Number:     regexp.MustCompile(`^(\d+)$`),
 }
+
+const commentSymbol = ';'
 
 type Tokenizer struct {
 	row       int
@@ -155,6 +154,12 @@ func (t *Tokenizer) Next() bool {
 		}
 		t.col += i
 		t.lineRest = t.lineRest[i:]
+
+		// ignore the line as soon as we find a comment symbol
+		if len(t.lineRest) == 0 || t.lineRest[0] == commentSymbol {
+			t.readMoreLines()
+			continue
+		}
 		idx := t.tokens.FindStringIndex(t.lineRest)
 		if idx != nil {
 			t.lastMatch = t.lineRest[idx[0]:idx[1]]
