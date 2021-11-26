@@ -159,19 +159,16 @@ end_song:
         ld      [music_ip], hl
         ld      a, 1                    ; reset wait timer
         ld      [wait_cnt], a
-        jp      music_loop
-
-        ld a, 2
-        ld [music_ip], a
-        ld a, 0
-        ld [music_ip+1], a
-        jp music_loop
-        ld a, b
-        cp 0
-        jp nz, music_loop
-        ld a, c
-        cp 0
-        jp nz, music_loop
+        
+        ; if return address is 0, we stop the music later, if not,
+        ; let's return to the music loop
+        ld      a, b
+        cp      0
+        jp      nz, music_loop
+        ld      a, c
+        cp      0
+        jp      nz, music_loop
+        
         ; todo, if there is loop address, update music_ip
         ; set music status as stopped, disable all channels, and return to loop
         ld      a, music_status_stopped

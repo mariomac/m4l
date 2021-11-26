@@ -2,10 +2,10 @@
 
 Toy Music Macro Language inspired in the old 8-bit macro languages.
 
-## How it looks and sounds?
+## Install
 
-[First proof-of-concept](https://twitter.com/MaciasUpc/status/1251876334529384450)
+No compiled dependencies are distributed at the moment. You can install the last snapshot via command line:
 
-[Poliphony](https://twitter.com/MaciasUpc/status/1253069577120034817)
-
-[Waveform definition](https://twitter.com/MaciasUpc/status/1257003671889608704)
+```
+go install github.com/mariomac/msxmml/cmd/m4l@master
+```

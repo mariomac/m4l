@@ -1,0 +1,17 @@
+; taken from https://www.youtube.com/watch?v=EJSvwgDvH5Q
+
+tempo 240
+
+; intro
+
+@ch1 <- a8g#8a8b8>d8c8<b8>c8 | e8<g8>c8e8g8f#8f8e8 | d8c8 < b8a8g8f8e8d8 | c r2  > c <
+
+loop:
+
+$aticotico :=  e8d#8e8 | f8ea8a8 e8d#8e8 
+        f8eg# e8d#8e8 | f8e8>d8<b8g#8e8d8c#8 | c2 c8 a8a-8g8            ; --line 7
+        f8 a > d8 d8c8 < a8f8 | e8a > c c8 < b a#  
+        b8<b8>d#8f#8a8>c8<b8a8 | g#8 > e <b8 > e8              ; --- line 12
+        
+@ch1 <- r2r8 $aticotico < $aticotico
+
