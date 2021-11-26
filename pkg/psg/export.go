@@ -62,6 +62,7 @@ func Export(s *song.Song) ([]byte, error) {
 			enc.chFramesCounter[k] = enc.framesCounter
 		}
 	}
+	data = append(data, (&instruction{Type: end}).encode()...)
 	return data, nil
 }
 

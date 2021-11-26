@@ -92,3 +92,4 @@ Instructions have variable bit size
 * `11110000` set envelope for A (ignore volume)
 * `11110001` set envelope for B (ignore volume)
 * `11110010` set envelope for C (ignore volume)
+* `11111xxx` song end (finish or jump to loop)

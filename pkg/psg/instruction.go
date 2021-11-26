@@ -23,6 +23,7 @@ const (
 	envelopeA
 	envelopeB
 	envelopeC
+	end
 )
 
 type instruction struct {
@@ -60,6 +61,8 @@ func (i *instruction) encode() []byte {
 		return []byte{0b11110001}
 	case envelopeC:
 		return []byte{0b11110010}
+	case end:
+		return []byte{0b11111000}
 	}
 	panic(fmt.Sprintf("Unknown instruction type: %d", i))
 }

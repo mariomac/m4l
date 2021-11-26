@@ -14,9 +14,10 @@ init_defaults:
         volB 0xF
         volC 0xF
         ld a, 15
-        ld (a_volume), a        
+        ld (a_volume), a  ; todo: not needed variables?
         ld (b_volume), a        
         ld (c_volume), a
+
 	channelSet 0b111000
 
         ; init instruction pointer, skipping loop address (2 bytes)
@@ -24,21 +25,25 @@ init_defaults:
         inc hl
         inc hl
         ld [music_ip], hl
-
+        ld a, music_status_playing
+        ld [music_status], a
         ld a, 1
         ld [wait_cnt], a
 
 music_loop:
-        ; yield until next frame
+        ld a, [music_status]
+        cp music_status_stopped
+        jp z, music_loop        ; todo: do a ret
+        ; yield until next frame. TODO: remove
         halt
         ld a, [wait_cnt]
         dec a
         ld [wait_cnt], a
         cp 0
-        jp nz, music_loop
+        jp nz, music_loop       ; todo: do a ret
 
 parse_instruction:
-        ld hl, [music_ip]       ; increase instruction pointer
+        ld hl, [music_ip]       ; read instruction and increase instruction pointer
         ld a, (hl)
         inc hl
         ld [music_ip], hl
@@ -102,7 +107,10 @@ b111xxxxx:
         jp nz, b1111xxxx
 set_volume_c: ; 1110xxxx        
         jp parse_instruction
-b1111xxxx: ; assuming bits 3&2 must be zero
+b1111xxxx: 
+        bit 3, a
+        jp nz, end_song
+b11110xxx: ; assuming bit 3 is zero
         bit 1, a
         jp nz, set_envelope_c
 b1111000x:
@@ -142,7 +150,36 @@ set_envelope_c:
         jp parse_instruction        
 set_envelope_b:
         jp parse_instruction
+end_song:
+        ; check if the loop address is zero. If so, the song ends,
+        ; otherwise it loops the music_ip to that address)
+        ld      bc, [music_file]        ; ip = music_file + music_file[1:0]
+        ld      hl, music_file
+        add     hl, bc
+        ld      [music_ip], hl
+        ld      a, 1                    ; reset wait timer
+        ld      [wait_cnt], a
+        jp      music_loop
 
+        ld a, 2
+        ld [music_ip], a
+        ld a, 0
+        ld [music_ip+1], a
+        jp music_loop
+        ld a, b
+        cp 0
+        jp nz, music_loop
+        ld a, c
+        cp 0
+        jp nz, music_loop
+        ; todo, if there is loop address, update music_ip
+        ; set music status as stopped, disable all channels, and return to loop
+        ld      a, music_status_stopped
+        ld      [music_status], a
+        ld      e, 0b10111111
+        ld	a, REG7_CHANNEL_SET
+        CALL    BIOS_WRTPSG
+        jp      music_loop
 
 stuff:  jp stuff
     include "rom/tail.asm"

@@ -22,6 +22,7 @@ func TestEncodeInstructions(t *testing.T) {
 		{Type: envelopeA},
 		{Type: envelopeB},
 		{Type: envelopeC},
+		{Type: end},
 	})
 	assert.Equal(t, []byte{
 		0, 0xAB, 0xCD,
@@ -38,5 +39,6 @@ func TestEncodeInstructions(t *testing.T) {
 		0b11110000,
 		0b11110001,
 		0b11110010,
+		0b11111000,
 	}, encoded)
 }

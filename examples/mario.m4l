@@ -1,9 +1,12 @@
 tempo 180
 
 @ch1 <- o4e8e8r8e8r8c8e | gr<gr
-        >cr8<gr8e|r8abb-8a
-        (g>eg)3 af8g8|r8ec8d8<b
 
 @ch2 <- o3 b8b8 r8 b8 r8 b8 b | >er<er
-        e r8 c r8 < a | r8 >c d d-8 c
-        (ca>c)3 d <b8>c8 | r8 <a f8g8e
+
+loop:
+
+@ch1 <- >cr8<gr8e|r8abb-8a
+        (g>eg)3 af8g8|r8ec8d8<b< r8
+@ch2 <- e r8 c r8 < a | r8 >c d d-8 c
+        (ca>c)3 d <b8>c8 | r8 <a f8g8e r8

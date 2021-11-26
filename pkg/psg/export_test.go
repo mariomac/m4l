@@ -39,6 +39,7 @@ func TestExportNotes(t *testing.T) {
 		{Type: toneB, Data: 0x140},
 		{Type: wait, Data: 30},
 		{Type: wait, Data: 15}, // at the end of the block, syncing to the added dot
+		{Type: end},
 	})...)
 
 	assert.Equal(t, expected, songBytes)
@@ -65,6 +66,7 @@ psg.hz 50
 		{Type: toneB, Data: 0x2FA}, // octave 3 d
 		{Type: wait, Data: 31},
 		{Type: wait, Data: 19},
+		{Type: end},
 	})...)
 	assert.Equal(t, expected, songBytes)
 }
@@ -103,6 +105,7 @@ func TestSilences(t *testing.T) {
 
 		{Type: channels, Data: 0b111_111},
 		{Type: wait, Data: 15}, // 1/2 beat silence waiting
+		{Type: end},
 	})...)
 	assert.Equal(t, expected, songBytes)
 
@@ -125,6 +128,32 @@ func TestParseTupletWithOctaveChange(t *testing.T) {
 		{Type: wait, Data: 20},
 		{Type: toneA, Data: 0x7F}, // octave 5
 		{Type: wait, Data: 30},
+		{Type: end},
 	})...)
 	assert.Equal(t, expected, songBytes)
+}
+
+func TestExportLoop(t *testing.T) {
+	s, err := lang.Parse(strings.NewReader(`
+@ch1 <- a b
+loop:
+@ch1 <- > c d
+`)) // todo: document that the > won't increase the octave undefinitely
+	require.NoError(t, err)
+	songBytes, err := Export(s)
+	require.NoError(t, err)
+	expected := append([]byte{9, 0}, encodeInstructions([]instruction{
+		{Type: channels, Data: 0b111_110},		// songBytes[2],
+		{Type: toneA, Data: 0xFE}, // o4 a		   songBytes[3]
+		{Type: wait, Data: 30},                 // songBytes[5],
+		{Type: toneA, Data: 0xE3}, // o4 b         songBytes[6]
+		{Type: wait, Data: 30},				    // songBytes[8],
+		{Type: toneA, Data: 0xD6}, // o5 c         songBytes[9] <-- loop here!
+		{Type: wait, Data: 30},
+		{Type: toneA, Data: 0xBE}, // o5 d
+		{Type: wait, Data: 30},
+		{Type: end},
+	})...)
+	assert.Equal(t, expected, songBytes)
+
 }
