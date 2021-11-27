@@ -1,4 +1,4 @@
-# MSX MML
+# Mario Macias Lloret's Music Macro Language (MMLMML)
 
 Toy Music Macro Language inspired in the old 8-bit macro languages.
 
