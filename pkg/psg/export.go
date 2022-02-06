@@ -43,6 +43,8 @@ func Export(s *song.Song) ([]byte, error) {
 			data[1] = byte(len(data) >> 8)
 		}
 		sbr := reader.NewSyncedBlock(s.Blocks[blockNum])
+		blockBeats := float64(0)
+		closedChannels := map[int]struct{}{}
 		for ti, ch := sbr.Next(); ch != ""; ti, ch = sbr.Next() {
 			itemData, err := enc.encodeTablatureItem(ti, ch)
 			if err != nil {
@@ -51,6 +53,10 @@ func Export(s *song.Song) ([]byte, error) {
 			data = append(data, itemData...)
 			if waitData := enc.encodedWaitTime(enc.nearestFrame); len(waitData) > 0 {
 				data = append(data, waitData...)
+			}
+			// check if we need to close any channel before continuing with the others
+			for _, chName := range sbr.BeatsPerChannel() {
+
 			}
 		}
 		// At the end of a block, we need to wait for the farthest wait time

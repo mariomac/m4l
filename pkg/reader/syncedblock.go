@@ -57,3 +57,15 @@ func (sbr *SyncedBlock) Next() (song.TablatureItem, string) {
 		return it, soonerChannel
 	}
 }
+
+func (sbr *SyncedBlock) BeatsPerChannel() map[string]float64 {
+	beats := map[string]float64{}
+	for name, items := range sbr.block.Channels {
+		total := float64(0)
+		for _, it := range items.Items {
+			total += it.DurationBeats()
+		}
+		beats[name]=total
+	}
+	return beats
+}

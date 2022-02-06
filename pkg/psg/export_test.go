@@ -191,6 +191,36 @@ $a := ab>c
 	assert.Equal(t, expected, songBytes)
 }
 
+func TestMultiChannelLoop(t *testing.T) {
+	s, err := lang.Parse(strings.NewReader(`
+@ch1 <- ab
+@ch2 <- c
+
+loop:
+
+@ch1 <- dr4
+`))
+	require.NoError(t, err)
+	songBytes, err := Export(s)
+	require.NoError(t, err)
+	expected := append([]byte{0, 0}, encodeInstructions([]instruction{
+		{Type: channels, Data: 0b111_110},
+		{Type: toneA, Data: 0xFE},				// ch1 a
+		{Type: channels, Data: 0b111_100},
+		{Type: toneB, Data: 0x1AC},				// ch2 c
+		{Type: wait, Data: 30},
+		{Type: toneA, Data: 0xE3},				// ch1 b
+		{Type: channels, Data: 0b111_110},		// should stop tone B music
+		{Type: wait, Data: 30},
+		{Type: toneA, Data: 0x17D},				// loop
+		{Type: wait, Data: 30},
+		{Type: channels, Data: 0b111_111},
+		{Type: wait, Data: 30},
+		{Type: end},
+	})...)
+	assert.Equal(t, expected, songBytes)
+}
+
 func TestTemplate(t *testing.T) {
 	t.Skip()
 	s, err := lang.Parse(strings.NewReader(`

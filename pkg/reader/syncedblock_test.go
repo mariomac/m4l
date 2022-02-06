@@ -15,22 +15,28 @@ func TestSyncedBlockReader(t *testing.T) {
 		{Instrument: &song.Instrument{Class: "psg"}},
 		{Silence: &song.Silence{Length: 1}},
 		{Note: &song.Note{Pitch: song.A, Length: 4}},
-		{Note: &song.Note{Pitch: song.B, Length: 4}},
+		{Note: &song.Note{Pitch: song.B, Length: 4}}, // 6 beats
 	}}
 	sb.Channels["b"] = &song.Channel{Items: []song.TablatureItem{
 		{Instrument: &song.Instrument{Class: "psg2"}},
 		{Note: &song.Note{Pitch: song.C, Length: 2}},
 		{OctaveStep: &one},
 		{Silence: &song.Silence{Length: 2}},
-		{Note: &song.Note{Pitch: song.F, Length: 4}},
+		{Note: &song.Note{Pitch: song.F, Length: 4}}, // 5 beats
 	}}
 	sb.Channels["c"] = &song.Channel{Items: []song.TablatureItem{
 		{SetOctave: &one},
 		{Silence: &song.Silence{Length: 2}},
 		{Note: &song.Note{Pitch: song.D, Length: 4}},
-		{Note: &song.Note{Pitch: song.E, Length: 4}},
+		{Note: &song.Note{Pitch: song.E, Length: 4}}, // 4 beats
 	}}
 	reader := NewSyncedBlock(sb)
+
+	assert.Equal(t, map[string]float64{
+		"a": float64(6),
+		"b": float64(5),
+		"c": float64(4),
+	}, reader.BeatsPerChannel())
 
 	item, name := reader.Next()
 	assert.Equal(t, "a", name)
@@ -78,4 +84,3 @@ func TestSyncedBlockReader(t *testing.T) {
 	_, name = reader.Next()
 	assert.Empty(t, name)
 }
-
