@@ -2,6 +2,7 @@
 
 ## Syntax
 
+
 ```
 ; comments start with ;
 ; constants are defined with a let. They can be instruments or tablature pieces

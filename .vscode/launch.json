@@ -1,0 +1,14 @@
+{
+    "version": "2.0.0",
+    "configurations": [
+        {
+            "type": "antlr-debug",
+            "request": "launch",
+            "name": "Debug Current Grammar",
+            "input": "test/input.txt",
+            "grammar": "m4l.g4",
+            "visualParseTree": true,
+            "printParseTree": false
+        }
+    ]
+}

@@ -5,12 +5,12 @@ program: header? constantDef* statement+ ('loop:' statement+)?;
 header: MAPENTRY (MAPENTRY)*;
 MAPENTRY: ALPHANUMERIC WS* ':' WS* ALPHANUMERIC;
 
-constantDef: CONSTANTID ':=' (tablature | instrumentDef);
+constantDef: CONSTANTID ':=' ( tablature | instrumentDef);
 instrumentDef: OPENINSTRUMENT MAPENTRY+ '}';
 OPENINSTRUMENT: ALPHANUMERIC WS* '{';
 
 tablature:
-	'{' (
+	(
 		NOTE
 		| SILENCE
 		| OCTAVE
@@ -20,7 +20,8 @@ tablature:
 		| '|'
 		| CONSTANTID
 		| tuplet
-	)+ '}';
+		| NL
+	)+;
 
 tuplet: '(' (NOTE | OCTAVE | INCOCT | DECOCT)+ ')' INT;
 
