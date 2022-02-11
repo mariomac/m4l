@@ -2,24 +2,25 @@ grammar m4l;
 
 program: header? constantDef* statement+ ('loop:' statement+)?;
 
-header: mapEntry (mapEntry)*;
+header: MAPENTRY (MAPENTRY)*;
+MAPENTRY: ALPHANUMERIC WS* ':' WS* ALPHANUMERIC;
 
-mapEntry: ID ':' (INT | ANY);
+constantDef: CONSTANTID ':=' (tablature | instrumentDef);
+instrumentDef: OPENINSTRUMENT MAPENTRY+ '}';
+OPENINSTRUMENT: ALPHANUMERIC WS* '{';
 
-constantDef: CONSTANTID ':=' (instrumentDef | tablature);
-instrumentDef: MAPCLASS '{' mapEntry+ '}';
-
-tablature: (
-		ID
-		| NOTE
+tablature:
+	'{' (
+		NOTE
 		| SILENCE
 		| OCTAVE
 		| INCOCT
 		| DECOCT
+		| VOLUME
+		| '|'
 		| CONSTANTID
 		| tuplet
-		| '|'
-	)+;
+	)+ '}';
 
 tuplet: '(' (NOTE | OCTAVE | INCOCT | DECOCT)+ ')' INT;
 
@@ -29,15 +30,15 @@ channelFill: CHANNELID '<-' tablature;
 
 sync: '-' '-' '-'+;
 
-CHANNELID: '@' ID;
-CONSTANTID: '$' ID;
-MAPCLASS: '#' ID;
+CHANNELID: '@' ALPHANUMERIC;
+CONSTANTID: '$' ALPHANUMERIC;
 
 NOTE: [a-gA-G](FLAT | SHARP)? INT? DOTS?;
-SILENCE: [rR]DIGIT?;
-OCTAVE: [oO]DIGIT?;
+SILENCE: [rR]INT? DOTS?;
+OCTAVE: [oO]INT?;
 INCOCT: '>';
 DECOCT: '<';
+VOLUME: [Vv]INT;
 
 FLAT: '-';
 SHARP: ('#' | '+');
@@ -45,10 +46,9 @@ DOTS: '.'+;
 
 fragment DIGIT: [0-9];
 fragment ALPHA: [a-zA-Z_.];
+fragment ALPHANUMERIC: (DIGIT | ALPHA)+;
 
 INT: DIGIT+;
-ID: ALPHA (ALPHA | DIGIT)*;
-ANY: (ALPHA | DIGIT)+;
 
 COMMENT: ';' (~[\r\n])* -> skip;
 
