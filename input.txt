@@ -10,16 +10,16 @@ tempo: 120
 psg.hz: 60
 
 ; variables start with $ and assigning an instrument or tablature uses the `:=`symbol
-$instrument1 := psg {
+$instrument1 := #psg {
     pattern: 2
 }
-$instrument2 := psg {
-    frequency: 123
+$instrument2:= #psg {
+    frequency:123
     noise: 12
     cycle: 23
     pattern: 4
 }
-$piece := o4 e8e8 r8 c8 e
+$piece:= v15 o4 e8e8r8. ac8 | e# e+4 (a b c)3 e-8 e#.. e+8.
 
 ; set channels instruments, combine variables and tablature literals. Constants are read with an $
 

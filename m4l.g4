@@ -4,38 +4,51 @@ program: header? constantDef* statement+ ('loop:' statement+)?;
 
 header: mapEntry (mapEntry)*;
 
-mapEntry: ID ':' (NUM | ANY);
+mapEntry: ID ':' (INT | ANY);
 
 constantDef: CONSTANTID ':=' (instrumentDef | tablature);
-instrumentDef: ID '{' mapEntry+ '}';
+instrumentDef: MAPCLASS '{' mapEntry+ '}';
 
+tablature: (
+		ID
+		| NOTE
+		| SILENCE
+		| OCTAVE
+		| INCOCT
+		| DECOCT
+		| CONSTANTID
+		| tuplet
+		| '|'
+	)+;
 
-tablature: (ID | NOTE | SILENCE | OCTAVE | INCOCT | DECOCT | CONSTANTID | tuplet | '|')+;
+tuplet: '(' (NOTE | OCTAVE | INCOCT | DECOCT)+ ')' INT;
 
-tuplet : '(' (NOTE|OCTAVE|INCOCT|DECOCT) + ')' NUM;
+statement: channelFill | sync;
 
-statement : channelFill | sync;
+channelFill: CHANNELID '<-' tablature;
 
-channelFill : CHANNELID '<-' tablature;
-
-sync: '-''-''-'+;
+sync: '-' '-' '-'+;
 
 CHANNELID: '@' ID;
 CONSTANTID: '$' ID;
+MAPCLASS: '#' ID;
 
-NOTE: [a-gA-G]DIGIT?; // TODO: dots and bemol
+NOTE: [a-gA-G](FLAT | SHARP)? INT? DOTS?;
 SILENCE: [rR]DIGIT?;
 OCTAVE: [oO]DIGIT?;
 INCOCT: '>';
 DECOCT: '<';
 
-fragment DIGIT : [0-9] ;
-fragment ALPHA : [a-zA-Z_.];
+FLAT: '-';
+SHARP: ('#' | '+');
+DOTS: '.'+;
 
+fragment DIGIT: [0-9];
+fragment ALPHA: [a-zA-Z_.];
+
+INT: DIGIT+;
 ID: ALPHA (ALPHA | DIGIT)*;
-ANY: (ALPHA | DIGIT)+; 
-NUM: DIGIT+ ('.' DIGIT+)?;
-
+ANY: (ALPHA | DIGIT)+;
 
 COMMENT: ';' (~[\r\n])* -> skip;
 
